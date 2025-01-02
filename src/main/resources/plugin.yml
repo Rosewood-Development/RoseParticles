@@ -1,0 +1,15 @@
+name: RoseParticles
+version: '@version@'
+authors: [Esophose]
+main: dev.rosewood.roseparticles.RoseParticles
+api-version: '1.13'
+description: A particle engine that allows creating incredibly customizable new particle types!
+softdepend:
+  - PlaceholderAPI
+permissions:
+  roseparticles.basecommand:
+    description: Allows using the RoseParticles commands
+    default: true
+  roseparticles.reload:
+    description: Allows running the reload command
+    default: op
