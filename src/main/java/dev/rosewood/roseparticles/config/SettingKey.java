@@ -14,7 +14,7 @@ public final class SettingKey {
     private static final List<RoseSetting<?>> KEYS = new ArrayList<>();
 
     public static final RoseSetting<Long> UPDATE_FREQUENCY = create("update-frequency", LONG, 1L, "The number of ticks to wait between particle engine updates");
-    public static final RoseSetting<CommentedConfigurationSection> RESOURCE_PACK_SERVER = create("resource-pack-server", "Resource pack server settings for hosting custom particle textures", "Can be disabled if you wish to include the particle textures in your own resource pack");
+    public static final RoseSetting<CommentedConfigurationSection> RESOURCE_PACK_SERVER = create("resource-pack-server", "Resource pack server settings for hosting custom particle textures", "Can be disabled if you wish to include the particle textures in your own resource pack", "The resulting pack download URL will look like this: http://%external-hostname%:%port%/pack.zip");
     public static final RoseSetting<Boolean> RESOURCE_PACK_SERVER_ENABLED = create("resource-pack-server.enabled", BOOLEAN, true, "Should the resource pack server be enabled?", "Players will be automatically prompted to download the resource pack when joining");
     public static final RoseSetting<String> RESOURCE_PACK_SERVER_HOSTNAME = create("resource-pack-server.hostname", STRING, "0.0.0.0", "The hostname to bind to");
     public static final RoseSetting<Integer> RESOURCE_PACK_SERVER_PORT = create("resource-pack-server.port", INTEGER, 8080, "The port to bind to");

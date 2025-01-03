@@ -2,6 +2,7 @@ package dev.rosewood.roseparticles.particle;
 
 import dev.rosewood.roseparticles.RoseParticles;
 import java.awt.Color;
+import java.util.List;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
@@ -25,22 +26,31 @@ public class ParticleInstance implements ParticleEffect {
     private final Vector acceleration;
     private final int lifetime;
     private final String font;
-    private final String symbols;
-    private int life;
+    private final List<String> sprites;
+    private final Color color;
+    private int currentSpriteIndex;
+    private int age;
     private TextDisplay textDisplay;
 
-    public ParticleInstance(int lifetime, Vector velocity, Vector acceleration, String font, String symbols) {
+    public ParticleInstance(int lifetime, Vector velocity, Vector acceleration, String font, List<String> sprites) {
         this.position = new Vector();
         this.velocity = velocity.clone();
         this.acceleration = acceleration.clone();
         this.lifetime = lifetime;
         this.font = font;
-        this.symbols = symbols;
+        this.sprites = sprites;
+        if (this.sprites.isEmpty())
+            throw new IllegalArgumentException("Must have at least one symbol");
+
+        int colorVal = hue;
+        hue = (hue + 5) % 360;
+        float hsb = colorVal / 360.0F;
+        this.color = Color.getHSBColor(hsb, 1, 1);
     }
 
     @Override
     public void update(ParticleSystem system) {
-        this.life++;
+        this.age++;
         this.position.add(this.velocity);
         this.velocity.add(this.acceleration);
         Location location = system.getOrigin().add(this.position);
@@ -50,10 +60,7 @@ public class ParticleInstance implements ParticleEffect {
             this.textDisplay = world.spawn(location, TextDisplay.class, entity -> {
                 entity.setPersistent(false);
                 entity.getPersistentDataContainer().set(DISPLAY_KEY, PersistentDataType.BOOLEAN, true);
-                int colorVal = hue;
-                hue = (hue + 5) % 360;
-                float hsb = colorVal / 360.0F;
-                Color color = Color.getHSBColor(hsb, 1, 1);
+
                 entity.setBillboard(Display.Billboard.CENTER);
                 entity.setBackgroundColor(org.bukkit.Color.fromARGB(0));
                 entity.setDefaultBackground(false);
@@ -62,9 +69,16 @@ public class ParticleInstance implements ParticleEffect {
                 Vector3f scale = transformation.getScale();
                 scale.set(2, 2, 2);
                 entity.setTransformation(transformation);
-                entity.text(Component.text(this.symbols).font(Key.key(this.font)).color(TextColor.color(color.getRGB())));
+                entity.text(Component.text(this.sprites.get(this.currentSpriteIndex)).font(Key.key(this.font)).color(TextColor.color(this.color.getRGB())));
             });
             return;
+        }
+
+        // Use texture linearly relative to age
+        int nextSpriteIndex = (int) Math.min(Math.floor((this.age / (double) this.lifetime) * this.sprites.size()), this.sprites.size() - 1);
+        if (this.currentSpriteIndex != nextSpriteIndex) {
+            this.currentSpriteIndex = nextSpriteIndex;
+            this.textDisplay.text(Component.text(this.sprites.get(this.currentSpriteIndex)).font(Key.key(this.font)).color(TextColor.color(this.color.getRGB())));
         }
 
         this.textDisplay.teleport(location);
@@ -80,7 +94,7 @@ public class ParticleInstance implements ParticleEffect {
 
     @Override
     public boolean expired() {
-        return this.life >= this.lifetime;
+        return this.age >= this.lifetime;
     }
 
 }
