@@ -30,6 +30,7 @@ public class ParticleManager extends Manager implements Listener {
     @Override
     public void reload() {
         this.particleTask = this.rosePlugin.getScheduler().runTaskTimer(this::update, 0L, SettingKey.UPDATE_FREQUENCY.get());
+        this.resourceServer.pack();
         if (SettingKey.RESOURCE_PACK_SERVER_ENABLED.get())
             this.resourceServer.start();
     }

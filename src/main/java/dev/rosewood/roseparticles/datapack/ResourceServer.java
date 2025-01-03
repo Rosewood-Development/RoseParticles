@@ -27,17 +27,26 @@ public class ResourceServer {
     private int port;
     private String externalHostname;
     private byte[] resourcePackHash = new byte[0];
+    private byte[] previousPackHash = new byte[0];
 
     public ResourceServer(RosePlugin rosePlugin) {
         this.rosePlugin = rosePlugin;
     }
 
+    public void pack() {
+        this.previousPackHash = this.resourcePackHash;
+        this.resourcePackHash = ResourcePacker.pack(this.rosePlugin, new File(this.rosePlugin.getDataFolder(), "pack"));
+
+        StringBuilder hashString = new StringBuilder();
+        for (byte packHash : this.resourcePackHash)
+            hashString.append(Integer.toString((packHash & 0xff) + 0x100, 16).substring(1));
+
+        this.rosePlugin.getLogger().info("pack.zip created with sha1 hash: " + hashString);
+    }
+
     public void start() {
         if (this.started)
             throw new IllegalStateException("Server is already started");
-
-        byte[] oldHash = this.resourcePackHash;
-        this.resourcePackHash = ResourcePacker.pack(this.rosePlugin, new File(this.rosePlugin.getDataFolder(), "pack"));
 
         String hostname = SettingKey.RESOURCE_PACK_SERVER_HOSTNAME.get();
         this.port = SettingKey.RESOURCE_PACK_SERVER_PORT.get();
@@ -49,11 +58,12 @@ public class ResourceServer {
             this.server = HttpServer.create(new InetSocketAddress(hostname, this.port), 0);
             this.server.createContext("/", this::handleDownload);
             this.server.start();
+            this.rosePlugin.getLogger().info("Resource server started and available at " + RESOURCE_PACK_URL.formatted(this.externalHostname, this.port));
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        if (!Arrays.equals(oldHash, this.resourcePackHash))
+        if (!Arrays.equals(this.previousPackHash, this.resourcePackHash))
             this.rosePlugin.getScheduler().runTaskLater(() -> Bukkit.getOnlinePlayers().forEach(this::setResourcePack), 20L);
 
         this.started = true;
