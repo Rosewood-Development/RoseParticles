@@ -1,3 +1,6 @@
+![](https://imgur.com/FMTPpgD.png)
+
+
 RoseParticles is a particle engine that allows creating incredibly customizable new particle types!
 
 ### Documentation
