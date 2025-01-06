@@ -108,7 +108,8 @@ public class MolangParser {
      */
     @ApiStatus.AvailableSince("1.0.0")
     public static MolangExpression parse(LexedMolang input, boolean simplify) throws MolangParseException {
-        MolangExpression expression = new MolangParser(input).expression();
+        MolangParser parser = new MolangParser(input);
+        MolangExpression expression = parser.expression();
         if(simplify) {
             expression = expression.simplify();
         }
@@ -261,6 +262,7 @@ public class MolangParser {
                 return switch (string) {
                     case "query", "q" -> reference(ReferenceType.QUERY);
                     case "variable", "v" -> reference(ReferenceType.VARIABLE);
+                    case "temp", "t" -> reference(ReferenceType.TEMP);
                     case "math", "m" -> math();
                     default -> throw new IllegalStateException("Unexpected value: " + string);
                 };
@@ -327,10 +329,20 @@ public class MolangParser {
 
     private MolangExpression reference(ReferenceType type) throws MolangParseException {
         if(match(IDENTIFIER)) {
-            return new ReferenceExpression(type, previous().lexeme());
+            String identifier = previous().lexeme();
+            if (match(EQUAL)) {
+                return assignment(type, identifier);
+            } else {
+                return new ReferenceEvaluationExpression(type, identifier);
+            }
         }
 
         throw new MolangParseException("Expected to find name after .");
+    }
+
+    private MolangExpression assignment(ReferenceType type, String identifier) throws MolangParseException {
+        MolangExpression expression = expression();
+        return new ReferenceAssignmentExpression(type, identifier, expression);
     }
 
     private MolangTokenInstance peek() {

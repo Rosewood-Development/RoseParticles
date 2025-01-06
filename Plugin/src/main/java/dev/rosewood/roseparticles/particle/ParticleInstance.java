@@ -1,12 +1,13 @@
 package dev.rosewood.roseparticles.particle;
 
+import dev.omega.arcane.ast.MolangExpression;
+import dev.omega.arcane.reference.ExpressionBindingContext;
+import dev.rosewood.roseparticles.component.ComponentType;
 import dev.rosewood.roseparticles.util.ParticleUtils;
 
-public class ParticleInstance implements ParticleEffect {
+public class ParticleInstance extends ParticleEffect {
 
     private final ParticleSystem particleSystem;
-    private int age;
-    private final float[] randoms;
 
 //    public static final NamespacedKey DISPLAY_KEY = new NamespacedKey(RoseParticles.getInstance(), "particle");
 //    private static int hue = 0;
@@ -24,7 +25,18 @@ public class ParticleInstance implements ParticleEffect {
 
     public ParticleInstance(ParticleSystem particleSystem/*, int lifetime, Vector velocity, Vector acceleration, String font, List<String> sprites*/) {
         this.particleSystem = particleSystem;
-        this.randoms = new float[]{ParticleUtils.RANDOM.nextFloat(), ParticleUtils.RANDOM.nextFloat(), ParticleUtils.RANDOM.nextFloat(), ParticleUtils.RANDOM.nextFloat()};
+        this.set("age", 0);
+
+        ExpressionBindingContext molangContext = this.particleSystem.getMolangContext();
+        var lifetimeComponent = particleSystem.getComponent(ComponentType.PARTICLE_LIFETIME_EXPRESSION);
+        if (lifetimeComponent != null) {
+            MolangExpression maxLifetimeExpression = lifetimeComponent.maxLifetime().bind(molangContext, this, this.particleSystem.getEmitter());
+            float lifetime = maxLifetimeExpression.evaluate();
+            this.set("lifetime", lifetime);
+        }
+
+        for (int i = 1; i <= 4; i++)
+            this.set("random_" + i, ParticleUtils.RANDOM.nextFloat());
 //        this.position = new Vector();
 //        this.velocity = velocity.clone();
 //        this.acceleration = acceleration.clone();
@@ -42,19 +54,28 @@ public class ParticleInstance implements ParticleEffect {
 
     @Override
     public void update() {
-        this.age++;
+        this.set("age", this.get("age") + 1);
     }
 
-    public float getLifetime() {
-        return 0;
+    @Override
+    public float get(String identifier) {
+        return super.get(mapIdentifier(identifier));
     }
 
-    public float getAge() {
-        return this.age;
+    @Override
+    public boolean has(String identifier) {
+        return super.has(mapIdentifier(identifier));
     }
 
-    public float[] getRandoms() {
-        return this.randoms;
+    @Override
+    public void set(String identifier, float value) {
+        super.set(mapIdentifier(identifier), value);
+    }
+
+    private static String mapIdentifier(String identifier) {
+        if (identifier.startsWith("particle_"))
+            return identifier.substring("particle_".length() + 1);
+        return identifier;
     }
 
     //    private void render() {

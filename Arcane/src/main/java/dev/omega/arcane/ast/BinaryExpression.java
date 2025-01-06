@@ -25,7 +25,6 @@ public record BinaryExpression(MolangExpression left, MolangExpression right, Mo
                 yield 1.0f;
             }
 
-            // Not sure if this is supported by Molang natively
             case DOUBLE_PIPE -> {
                 if(leftValue != 0.0 || rightValue != 0.0) {
                     yield 1.0f;

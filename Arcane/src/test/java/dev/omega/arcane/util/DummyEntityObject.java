@@ -2,13 +2,14 @@ package dev.omega.arcane.util;
 
 public class DummyEntityObject {
 
-    private int age = 37;
+    private float age = 37;
 
-    public int getAge() {
+    public float getAge() {
         return age;
     }
 
     public void incrementAge() {
         age++;
     }
+
 }

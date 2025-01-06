@@ -49,7 +49,6 @@ public class ParserTests {
         Assertions.assertInstanceOf(BinaryExpression.class, MolangParser.parse("5 && 5", MolangParser.FLAG_NONE));
     }
 
-    // todo: not actually sure if "OR" is part of the Molang spec?
     @Test
     public void Parse_BinaryOr_ReturnsBinaryExpression() throws MolangLexException, MolangParseException {
         Assertions.assertInstanceOf(BinaryExpression.class, MolangParser.parse("5 || 5", MolangParser.FLAG_NONE));

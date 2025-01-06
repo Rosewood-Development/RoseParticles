@@ -2,7 +2,7 @@ package dev.omega.arcane.reference;
 
 import dev.omega.arcane.ast.MolangExpression;
 import dev.omega.arcane.ast.ObjectAwareExpression;
-import dev.omega.arcane.ast.ReferenceExpression;
+import dev.omega.arcane.ast.ReferenceEvaluationExpression;
 import dev.omega.arcane.exception.MolangLexException;
 import dev.omega.arcane.exception.MolangParseException;
 import dev.omega.arcane.parser.MolangParser;
@@ -27,7 +27,7 @@ public class QueryReferenceTests {
 
     @Test
     public void QueryReference_Parse_ReturnsExpression() throws MolangLexException, MolangParseException {
-        Assertions.assertInstanceOf(ReferenceExpression.class, MolangParser.parse("query.age"));
+        Assertions.assertInstanceOf(ReferenceEvaluationExpression.class, MolangParser.parse("query.age"));
     }
 
     @Test

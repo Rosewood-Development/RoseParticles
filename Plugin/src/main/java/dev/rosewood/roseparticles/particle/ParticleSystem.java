@@ -1,5 +1,6 @@
 package dev.rosewood.roseparticles.particle;
 
+import dev.omega.arcane.reference.ExpressionBindingContext;
 import dev.rosewood.roseparticles.component.ComponentType;
 import dev.rosewood.roseparticles.particle.config.ParticleFile;
 import java.util.ArrayList;
@@ -14,7 +15,7 @@ public class ParticleSystem {
     private final Location origin;
     private final ParticleFile particleFile;
 
-    private final MolangSession molangSession;
+    private final ExpressionBindingContext molangContext;
     private final EmitterInstance emitter;
     private final List<ParticleInstance> particles;
 
@@ -22,7 +23,7 @@ public class ParticleSystem {
         this.attachedTo = entity;
         this.origin = null;
         this.particleFile = particleFile;
-        this.molangSession = new MolangSession();
+        this.molangContext = ExpressionBindingContext.create();
         this.emitter = new EmitterInstance(this);
         this.particles = new ArrayList<>();
     }
@@ -31,9 +32,13 @@ public class ParticleSystem {
         this.attachedTo = null;
         this.origin = origin;
         this.particleFile = particleFile;
-        this.molangSession = new MolangSession();
+        this.molangContext = ExpressionBindingContext.create();
         this.emitter = new EmitterInstance(this);
         this.particles = new ArrayList<>();
+    }
+
+    public EmitterInstance getEmitter() {
+        return this.emitter;
     }
 
     public void update() {
@@ -75,8 +80,8 @@ public class ParticleSystem {
         throw new IllegalStateException();
     }
 
-    public MolangSession getMolangSession() {
-        return this.molangSession;
+    public ExpressionBindingContext getMolangContext() {
+        return this.molangContext;
     }
 
     public boolean isFinished() {

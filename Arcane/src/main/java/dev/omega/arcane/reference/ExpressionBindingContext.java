@@ -2,23 +2,24 @@ package dev.omega.arcane.reference;
 
 import dev.omega.arcane.ast.MolangExpression;
 import dev.omega.arcane.ast.ObjectAwareExpression;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ExpressionBindingContext {
 
-    private final Map<ReferenceType, List<Binder<?>>> evaluators = new HashMap<>();
+    private final Map<ReferenceType, List<Binder<?>>> evaluators;
+    private final MolangVariableStorage tempVariableStorage;
 
     private ExpressionBindingContext() {
-
+        this.evaluators = new HashMap<>();
+        this.tempVariableStorage = new TempMolangVariableStorage();
     }
 
     @ApiStatus.AvailableSince("1.0.0")
@@ -83,6 +84,12 @@ public class ExpressionBindingContext {
     @NotNull
     private List<Binder<?>> getTypeEvaluator(ReferenceType type) {
         return evaluators.computeIfAbsent(type, key -> new ArrayList<>());
+    }
+
+    @ApiStatus.Internal
+    @NotNull
+    public MolangVariableStorage getTempVariableStorage() {
+        return this.tempVariableStorage;
     }
 
     public interface Binder<T> {

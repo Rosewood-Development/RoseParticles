@@ -32,7 +32,7 @@ public interface MolangExpression {
     }
 
     /**
-     * Rebinds {@link ReferenceExpression} ({@code variable.x}, {@code query.y}, etc.) into an {@link ObjectAwareExpression} based on the {@link ExpressionBindingContext} and provided {@code values}.
+     * Rebinds {@link ReferenceEvaluationExpression} ({@code variable.x}, {@code query.y}, etc.) into an {@link ObjectAwareExpression} based on the {@link ExpressionBindingContext} and provided {@code values}.
      * This will let you remap (for example) a reference for {@code variable.foo} into a call to {@link Object#hashCode()}.
      *
      * <p>
@@ -54,7 +54,7 @@ public interface MolangExpression {
      *                  WorldFooExpression::new
      *             );
      *
-     * // Re-bind expression to convert {@link ReferenceExpression} into direct method calls
+     * // Re-bind expression to convert {@link ReferenceEvaluationExpression } into direct method calls
      * //   -> equivalent to world.getFoo() + player.getBar()
      * var expression = MolangParser.parse("variable.foo + query.bar").bind(
      *      context,
