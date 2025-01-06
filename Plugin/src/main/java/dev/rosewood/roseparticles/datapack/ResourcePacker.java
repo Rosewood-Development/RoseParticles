@@ -4,7 +4,6 @@ import com.google.gson.FormattingStyle;
 import com.google.gson.stream.JsonWriter;
 import dev.rosewood.rosegarden.RosePlugin;
 import dev.rosewood.roseparticles.util.ParticleUtils;
-import java.awt.Dimension;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
@@ -13,17 +12,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.FileImageInputStream;
-import javax.imageio.stream.ImageInputStream;
-import org.bukkit.Bukkit;
 
 public final class ResourcePacker {
 
@@ -31,7 +24,7 @@ public final class ResourcePacker {
 
     }
 
-    public static byte[] pack(RosePlugin rosePlugin, File resourcePack) {
+    public static byte[] pack(RosePlugin rosePlugin, File resourcePack, Collection<StitchedTexture> textures) {
         try {
             resourcePack.mkdirs();
 
@@ -40,48 +33,18 @@ public final class ResourcePacker {
                 writeMcMetaFile(mcmeta);
 
             File texturesFolder = new File(resourcePack, "assets/" + rosePlugin.getName().toLowerCase() + "/textures/particle");
-            deleteDirectory(texturesFolder);
-            texturesFolder.mkdirs();
-
-            Path rootTexturePath = new File(rosePlugin.getDataFolder(), "textures").toPath();
-            List<Path> originalTexturePaths = getTextureFilePaths(rosePlugin);
-            // TODO: Potentially split files based on particle file definition UVs, for now just copy everything
-            List<Path> texturePaths = new ArrayList<>(originalTexturePaths.size());
-            for (Path texturePath : originalTexturePaths) {
-                String relativePath = rootTexturePath.relativize(texturePath).toString().replace('\\', '/');
-                Path targetPath = new File(texturesFolder, relativePath).toPath();
-                Files.copy(texturePath, targetPath);
-                texturePaths.add(targetPath);
-            }
 
             File fontFolder = new File(resourcePack, "assets/" + rosePlugin.getName().toLowerCase() + "/font");
             fontFolder.mkdirs();
 
             File font = new File(fontFolder, "sprites.json");
-            writeSpritesFile(rosePlugin, font, texturesFolder, texturePaths);
+            writeSpritesFile(rosePlugin, font, texturesFolder, textures);
 
             return compressDirectoryContentsToZip(resourcePack, new File(rosePlugin.getDataFolder(), ResourceServer.PACK_NAME));
         } catch (IOException e) {
             rosePlugin.getLogger().severe("Could not pack resources for resource pack zip");
             e.printStackTrace();
             return new byte[0];
-        }
-    }
-
-    private static void deleteDirectory(File directory) {
-        File[] contents = directory.listFiles();
-        if (contents != null)
-            for (File file : contents)
-                deleteDirectory(file);
-        directory.delete();
-    }
-
-    private static List<Path> getTextureFilePaths(RosePlugin rosePlugin) throws IOException {
-        File texturesFolder = new File(rosePlugin.getDataFolder(), "textures");
-        try (Stream<Path> stream = Files.walk(texturesFolder.toPath())) {
-            return stream.filter(path -> !Files.isDirectory(path))
-                    .filter(ResourcePacker::isSupportedImageType)
-                    .toList();
         }
     }
 
@@ -109,73 +72,41 @@ public final class ResourcePacker {
         }
     }
 
-    private static void writeSpritesFile(RosePlugin rosePlugin, File file, File texturesFolder, List<Path> textures) throws IOException {
+    private static void writeSpritesFile(RosePlugin rosePlugin, File file, File texturesFolder, Collection<StitchedTexture> textures) throws IOException {
         try (JsonWriter jsonWriter = ParticleUtils.GSON.newJsonWriter(new FileWriter(file))) {
             jsonWriter.setFormattingStyle(FormattingStyle.PRETTY);
             jsonWriter.beginObject();
             jsonWriter.name("providers");
             jsonWriter.beginArray();
-            int id = 1;
             Path texturesFolderPath = texturesFolder.toPath();
-            for (Path texturePath : textures) {
-                try {
-                    Dimension imageDimension = getImageDimension(texturePath.toFile());
-                    String relativePath = texturesFolderPath.relativize(texturePath).toString().replace('\\', '/');
-                    Bukkit.broadcastMessage("Loaded texture at " + relativePath + " with id " + id);
+            for (StitchedTexture texture : textures) {
+                List<String> fileNames = texture.fileNames();
+                List<Character> symbols = texture.symbols();
+                for (int i = 0; i < fileNames.size(); i++) {
+                    String fileName = fileNames.get(i);
+                    int symbol = symbols.get(i);
+
+                    Path filePath = texturesFolderPath.resolve(fileName);
+                    String relativePath = texturesFolderPath.relativize(filePath).toString().replace('\\', '/');
                     jsonWriter.beginObject();
                     jsonWriter.name("type");
                     jsonWriter.value("bitmap");
                     jsonWriter.name("file");
                     jsonWriter.value(rosePlugin.getName().toLowerCase() + ":particle/" + relativePath);
                     jsonWriter.name("ascent");
-                    jsonWriter.value(imageDimension.height / 2);
+                    jsonWriter.value(texture.dimension().height);
                     jsonWriter.name("height");
-                    jsonWriter.value(imageDimension.height);
+                    jsonWriter.value(texture.dimension().height);
                     jsonWriter.name("chars");
                     jsonWriter.beginArray();
-                    jsonWriter.jsonValue("\"\\u%04x\"".formatted(id));
+                    jsonWriter.jsonValue("\"\\u%04x\"".formatted(symbol));
                     jsonWriter.endArray();
                     jsonWriter.endObject();
-                    id++;
-                } catch (Exception e) {
-                    rosePlugin.getLogger().warning("Failed to read texture " + texturePath);
-                    e.printStackTrace();
                 }
             }
             jsonWriter.endArray();
             jsonWriter.endObject();
         }
-    }
-
-    /**
-     * Gets image dimensions for given file.
-     * <a href="https://stackoverflow.com/a/12164026">Source</a>
-     * @param imgFile image file
-     * @return dimensions of image
-     * @throws IOException if the file is not a known image
-     */
-    private static Dimension getImageDimension(File imgFile) throws IOException {
-        int pos = imgFile.getName().lastIndexOf(".");
-        if (pos == -1)
-            throw new IOException("No extension for file: " + imgFile.getAbsolutePath());
-        String suffix = imgFile.getName().substring(pos + 1);
-        Iterator<ImageReader> iter = ImageIO.getImageReadersBySuffix(suffix);
-        while (iter.hasNext()) {
-            ImageReader reader = iter.next();
-            try {
-                ImageInputStream stream = new FileImageInputStream(imgFile);
-                reader.setInput(stream);
-                int width = reader.getWidth(reader.getMinIndex());
-                int height = reader.getHeight(reader.getMinIndex());
-                return new Dimension(width, height);
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                reader.dispose();
-            }
-        }
-
-        throw new IOException("Not a known image file: " + imgFile.getAbsolutePath());
     }
 
     private static byte[] compressDirectoryContentsToZip(File root, File destination) throws IOException {

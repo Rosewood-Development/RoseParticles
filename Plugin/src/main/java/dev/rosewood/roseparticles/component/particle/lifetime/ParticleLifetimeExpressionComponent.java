@@ -13,7 +13,7 @@ public record ParticleLifetimeExpressionComponent(MolangExpression expirationExp
     public static ParticleLifetimeExpressionComponent parse(JsonElement jsonElement) throws MolangLexException, MolangParseException {
         JsonObject jsonObject = jsonElement.getAsJsonObject();
         MolangExpression expirationExpression = JsonHelper.parseMolang(jsonObject, "expiration_expression");
-        MolangExpression maxLifetime = JsonHelper.parseMolang(jsonObject, "max_lifetime");
+        MolangExpression maxLifetime = JsonHelper.parseMolang(jsonObject, "max_lifetime", null);
         return new ParticleLifetimeExpressionComponent(expirationExpression, maxLifetime);
     }
 

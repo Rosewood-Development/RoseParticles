@@ -2,14 +2,20 @@ package dev.rosewood.roseparticles.particle;
 
 import dev.omega.arcane.ast.MolangExpression;
 import dev.omega.arcane.reference.ExpressionBindingContext;
+import dev.rosewood.roseparticles.RoseParticles;
 import dev.rosewood.roseparticles.component.ComponentType;
 import dev.rosewood.roseparticles.util.ParticleUtils;
+import org.bukkit.NamespacedKey;
+import org.bukkit.entity.TextDisplay;
 
 public class ParticleInstance extends ParticleEffect {
 
+    public static final NamespacedKey DISPLAY_KEY = new NamespacedKey(RoseParticles.getInstance(), "particle");
+
     private final ParticleSystem particleSystem;
 
-//    public static final NamespacedKey DISPLAY_KEY = new NamespacedKey(RoseParticles.getInstance(), "particle");
+    private final MolangExpression expirationExpression;
+
 //    private static int hue = 0;
 
 //    private final Vector position;
@@ -20,8 +26,7 @@ public class ParticleInstance extends ParticleEffect {
 //    private final List<String> sprites;
 //    private final Color color;
 //    private int currentSpriteIndex;
-//    private int age;
-//    private TextDisplay textDisplay;
+    private TextDisplay textDisplay;
 
     public ParticleInstance(ParticleSystem particleSystem/*, int lifetime, Vector velocity, Vector acceleration, String font, List<String> sprites*/) {
         this.particleSystem = particleSystem;
@@ -30,13 +35,18 @@ public class ParticleInstance extends ParticleEffect {
         ExpressionBindingContext molangContext = this.particleSystem.getMolangContext();
         var lifetimeComponent = particleSystem.getComponent(ComponentType.PARTICLE_LIFETIME_EXPRESSION);
         if (lifetimeComponent != null) {
+            this.expirationExpression = lifetimeComponent.expirationExpression().bind(molangContext, this, this.particleSystem.getEmitter());
+
             MolangExpression maxLifetimeExpression = lifetimeComponent.maxLifetime().bind(molangContext, this, this.particleSystem.getEmitter());
             float lifetime = maxLifetimeExpression.evaluate();
             this.set("lifetime", lifetime);
+        } else {
+            this.expirationExpression = null;
         }
 
         for (int i = 1; i <= 4; i++)
             this.set("random_" + i, ParticleUtils.RANDOM.nextFloat());
+
 //        this.position = new Vector();
 //        this.velocity = velocity.clone();
 //        this.acceleration = acceleration.clone();
@@ -53,8 +63,8 @@ public class ParticleInstance extends ParticleEffect {
     }
 
     @Override
-    public void update() {
-        this.set("age", this.get("age") + 1);
+    public void update(float deltaTime) {
+        this.set("age", this.get("age") + deltaTime);
     }
 
     @Override
@@ -72,13 +82,26 @@ public class ParticleInstance extends ParticleEffect {
         super.set(mapIdentifier(identifier), value);
     }
 
+    public boolean expired() {
+        if (this.expirationExpression != null) {
+            float value = this.expirationExpression.evaluate();
+            if (value != 0)
+                return true;
+        }
+
+        if (this.has("lifetime"))
+            return this.get("age") >= this.get("lifetime");
+
+        return false;
+    }
+
     private static String mapIdentifier(String identifier) {
         if (identifier.startsWith("particle_"))
             return identifier.substring("particle_".length() + 1);
         return identifier;
     }
 
-    //    private void render() {
+//    private void render() {
 //        this.position.add(this.velocity);
 //        this.velocity.add(this.acceleration);
 //        Location location = this.particleSystem.getOrigin().add(this.position);
@@ -111,18 +134,12 @@ public class ParticleInstance extends ParticleEffect {
 //
 //        this.textDisplay.teleport(location);
 //    }
-//
-//    @Override
-//    public void remove() {
-//        if (this.textDisplay != null) {
-//            this.textDisplay.remove();
-//            this.textDisplay = null;
-//        }
-//    }
-//
-//    @Override
-//    public boolean expired() {
-//        return this.age >= this.lifetime;
-//    }
+
+    public void remove() {
+        if (this.textDisplay != null) {
+            this.textDisplay.remove();
+            this.textDisplay = null;
+        }
+    }
 
 }

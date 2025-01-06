@@ -11,7 +11,7 @@ public record EmitterLifetimeOnceComponent(MolangExpression activeTime) {
 
     public static EmitterLifetimeOnceComponent parse(JsonElement jsonElement) throws MolangLexException, MolangParseException {
         JsonObject jsonObject = jsonElement.getAsJsonObject();
-        MolangExpression activeTime = JsonHelper.parseMolang(jsonObject, "active_time", "10");
+        MolangExpression activeTime = JsonHelper.parseMolang(jsonObject, "active_time", 10F);
         return new EmitterLifetimeOnceComponent(activeTime);
     }
 

@@ -12,8 +12,8 @@ public record EmitterLifetimeLoopingComponent(MolangExpression activeTime,
 
     public static EmitterLifetimeLoopingComponent parse(JsonElement jsonElement) throws MolangLexException, MolangParseException {
         JsonObject jsonObject = jsonElement.getAsJsonObject();
-        MolangExpression activeTime = JsonHelper.parseMolang(jsonObject, "active_time", "10");
-        MolangExpression sleepTime = JsonHelper.parseMolang(jsonObject, "sleep_time", "0");
+        MolangExpression activeTime = JsonHelper.parseMolang(jsonObject, "active_time", 10F);
+        MolangExpression sleepTime = JsonHelper.parseMolang(jsonObject, "sleep_time", 0F);
         return new EmitterLifetimeLoopingComponent(activeTime, sleepTime);
     }
 

@@ -11,7 +11,7 @@ public record EmitterRateManualComponent(MolangExpression maxParticles) {
 
     public static EmitterRateManualComponent parse(JsonElement jsonElement) throws MolangLexException, MolangParseException {
         JsonObject jsonObject = jsonElement.getAsJsonObject();
-        MolangExpression maxParticles = JsonHelper.parseMolang(jsonObject, "max_particles", "50");
+        MolangExpression maxParticles = JsonHelper.parseMolang(jsonObject, "max_particles", 50F);
         return new EmitterRateManualComponent(maxParticles);
     }
 

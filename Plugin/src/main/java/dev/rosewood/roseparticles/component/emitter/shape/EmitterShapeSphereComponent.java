@@ -18,7 +18,7 @@ public record EmitterShapeSphereComponent(MolangExpressionVector3 offset,
     public static EmitterShapeSphereComponent parse(JsonElement jsonElement) throws MolangLexException, MolangParseException {
         JsonObject jsonObject = jsonElement.getAsJsonObject();
         MolangExpressionVector3 offset = MolangExpressionVector3.parse(jsonObject, "offset");
-        MolangExpression radius = JsonHelper.parseMolang(jsonObject, "radius", "1");
+        MolangExpression radius = JsonHelper.parseMolang(jsonObject, "radius", 1F);
         boolean surfaceOnly = JsonHelper.parseBoolean(jsonObject, "surface_only", false);
         EmitterDirectionType direction = EmitterDirectionType.parse(jsonObject, "direction", EmitterDirectionType.OUTWARDS);
         MolangExpressionVector3 directionCustom = MolangExpressionVector3.parse(jsonObject, "direction");

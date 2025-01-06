@@ -23,20 +23,12 @@ public interface MolangVariableStorage {
 
     /**
      * Sets the float value of the variable stored under the identifier.
-     * Does nothing if {@link #readonly()} returns true.
      *
      * @param identifier The identifier to set the value of
      * @param value The identifier value to assign
      */
     default void set(String identifier, float value) {
 
-    }
-
-    /**
-     * @return true if this variable storage is read-only, false if it can be written to
-     */
-    default boolean readonly() {
-        return true;
     }
 
     default MolangExpression createEvaluationExpression(String identifier) {

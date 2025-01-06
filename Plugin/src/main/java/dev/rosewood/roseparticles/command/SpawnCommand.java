@@ -1,12 +1,13 @@
 package dev.rosewood.roseparticles.command;
 
 import dev.rosewood.rosegarden.RosePlugin;
+import dev.rosewood.rosegarden.command.framework.ArgumentsDefinition;
 import dev.rosewood.rosegarden.command.framework.BaseRoseCommand;
 import dev.rosewood.rosegarden.command.framework.CommandContext;
 import dev.rosewood.rosegarden.command.framework.CommandInfo;
 import dev.rosewood.rosegarden.command.framework.annotation.RoseExecutable;
+import dev.rosewood.roseparticles.command.argument.ParticleFileArgumentHandler;
 import dev.rosewood.roseparticles.manager.ParticleManager;
-import dev.rosewood.roseparticles.particle.ParticleSystem;
 import dev.rosewood.roseparticles.particle.config.ParticleFile;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -19,7 +20,7 @@ public class SpawnCommand extends BaseRoseCommand {
     }
 
     @RoseExecutable
-    public void execute(CommandContext context) {
+    public void execute(CommandContext context, ParticleFile particleFile) {
         Location location;
         if (context.getSender() instanceof Player player) {
             location = player.getLocation();
@@ -27,8 +28,7 @@ public class SpawnCommand extends BaseRoseCommand {
             location = new Location(Bukkit.getWorlds().getFirst(), 0, 0, 0);
         }
         ParticleManager particleManager = this.rosePlugin.getManager(ParticleManager.class);
-        ParticleFile particleFile = particleManager.getParticleFiles().get("rainbow.particle");
-        ParticleSystem particleSystem = new ParticleSystem(location, particleFile);
+        particleManager.spawnParticleSystem(location, particleFile);
 //        ParticleSystem particleSystem = new ParticleSystem(player.getLocation());
 //        ParticleEffect emitter = new EmitterInstance(200, () -> {
 //            List<ParticleEffect> effects = new ArrayList<>();
@@ -48,6 +48,10 @@ public class SpawnCommand extends BaseRoseCommand {
     @Override
     protected CommandInfo createCommandInfo() {
         return CommandInfo.builder("spawn")
+                .permission("roseparticles.spawn")
+                .arguments(ArgumentsDefinition.builder()
+                        .required("particle", ParticleFileArgumentHandler.INSTANCE)
+                        .build())
                 .build();
     }
 

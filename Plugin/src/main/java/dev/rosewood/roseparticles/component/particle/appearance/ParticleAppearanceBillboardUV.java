@@ -13,7 +13,7 @@ public record ParticleAppearanceBillboardUV(int textureWidth,
                                             Vector2 uvSize,
                                             ParticleAppearanceBillboardUVFlipbook flipbook) {
 
-    public ParticleAppearanceBillboardUV parse(JsonObject jsonObject) throws MolangLexException, MolangParseException {
+    public static ParticleAppearanceBillboardUV parse(JsonObject jsonObject) throws MolangLexException, MolangParseException {
         int textureWidth = JsonHelper.parseInt(jsonObject, "texture_width", 1);
         int textureHeight = JsonHelper.parseInt(jsonObject, "texture_height", 1);
         Vector2 uv = Vector2.parse(jsonObject, "uv");

@@ -3,6 +3,7 @@ package dev.rosewood.roseparticles.util;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import dev.omega.arcane.ast.ConstantExpression;
 import dev.omega.arcane.ast.MolangExpression;
 import dev.omega.arcane.exception.MolangLexException;
 import dev.omega.arcane.exception.MolangParseException;
@@ -106,13 +107,18 @@ public final class JsonHelper {
     }
 
     public static MolangExpression parseMolang(JsonObject jsonObject, String property) throws MolangLexException, MolangParseException {
-        return parseMolang(jsonObject, property, "0.0");
+        return parseMolang(jsonObject, property, 0.0F);
     }
 
-    public static MolangExpression parseMolang(JsonObject jsonObject, String property, String defaultValue) throws MolangLexException, MolangParseException {
+    public static MolangExpression parseMolang(JsonObject jsonObject, String property, Float defaultValue) throws MolangLexException, MolangParseException {
         JsonElement element = jsonObject.get(property);
-        if (element == null)
-            return MolangParser.parse(defaultValue);
+        if (element == null) {
+            if (defaultValue == null) {
+                return null;
+            } else {
+                return new ConstantExpression(defaultValue);
+            }
+        }
         String expression = element.getAsString();
         return MolangParser.parse(expression);
     }

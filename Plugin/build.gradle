@@ -6,7 +6,7 @@ dependencies {
     compileOnly project(':Arcane')
     compileOnly 'io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT'
 
-    api 'dev.rosewood:rosegarden:1.4.6'
+    api 'dev.rosewood:rosegarden:1.4.7-SNAPSHOT'
 }
 
 processResources {

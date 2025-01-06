@@ -12,6 +12,7 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.Collection;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -33,15 +34,15 @@ public class ResourceServer {
         this.rosePlugin = rosePlugin;
     }
 
-    public void pack() {
+    public void pack(File packDirectory, Collection<StitchedTexture> textures) {
         this.previousPackHash = this.resourcePackHash;
-        this.resourcePackHash = ResourcePacker.pack(this.rosePlugin, new File(this.rosePlugin.getDataFolder(), "pack"));
+        this.resourcePackHash = ResourcePacker.pack(this.rosePlugin, packDirectory, textures);
 
         StringBuilder hashString = new StringBuilder();
         for (byte packHash : this.resourcePackHash)
             hashString.append(Integer.toString((packHash & 0xff) + 0x100, 16).substring(1));
 
-        this.rosePlugin.getLogger().info("pack.zip created with sha1 hash: " + hashString);
+        this.rosePlugin.getLogger().info(PACK_NAME + " created with sha1 hash: " + hashString);
     }
 
     public void start() {

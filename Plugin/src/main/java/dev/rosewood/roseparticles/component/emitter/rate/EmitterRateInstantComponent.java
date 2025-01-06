@@ -11,7 +11,7 @@ public record EmitterRateInstantComponent(MolangExpression numParticles) {
 
     public static EmitterRateInstantComponent parse(JsonElement jsonElement) throws MolangLexException, MolangParseException {
         JsonObject jsonObject = jsonElement.getAsJsonObject();
-        MolangExpression numParticles = JsonHelper.parseMolang(jsonObject, "num_particles", "10");
+        MolangExpression numParticles = JsonHelper.parseMolang(jsonObject, "num_particles", 10F);
         return new EmitterRateInstantComponent(numParticles);
     }
 

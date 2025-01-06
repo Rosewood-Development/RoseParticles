@@ -26,9 +26,4 @@ public class TempMolangVariableStorage implements MolangVariableStorage {
         this.variableStorage.put(identifier, value);
     }
 
-    @Override
-    public boolean readonly() {
-        return false;
-    }
-
 }

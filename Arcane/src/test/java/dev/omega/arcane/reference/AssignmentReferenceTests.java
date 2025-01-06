@@ -39,7 +39,7 @@ public class AssignmentReferenceTests {
 
         MolangParser.parse("variable.age = 5").bind(context, entity).evaluate();
         Assertions.assertEquals(5, entity.get("age")); // set original age to 5
-        MolangExpression assignmentExpression = MolangParser.parse("variable.age = variable.age + 5").bind(context, entity); // set
+        MolangExpression assignmentExpression = MolangParser.parse("variable.age = variable.age + 5").bind(context, entity); // set equal to itself plus 5
         Assertions.assertEquals(10, assignmentExpression.evaluate()); // assignment should return the value set, which is 10
         MolangExpression evaluationExpression = MolangParser.parse("variable.age").bind(context, entity);
         Assertions.assertEquals(10, entity.get("age")); // verify change reflects on the entity object

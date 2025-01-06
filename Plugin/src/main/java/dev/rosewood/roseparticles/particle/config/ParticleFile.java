@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 public record ParticleFile(String formatVersion,
                            ParticleDescription description,
@@ -76,6 +77,12 @@ public record ParticleFile(String formatVersion,
             e.printStackTrace();
             return null;
         }
+    }
+
+    @Nullable
+    @SuppressWarnings("unchecked")
+    public <T> T getComponent(ComponentType<T> componentType) {
+        return (T) this.components.get(componentType);
     }
 
 }

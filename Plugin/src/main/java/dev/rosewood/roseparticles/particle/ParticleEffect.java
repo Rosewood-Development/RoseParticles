@@ -15,7 +15,7 @@ public abstract class ParticleEffect implements MolangVariableStorage {
     /**
      * Updates this ParticleEffect
      */
-    public abstract void update();
+    public abstract void update(float deltaTime);
 
     @Override
     public float get(String identifier) {
@@ -30,11 +30,6 @@ public abstract class ParticleEffect implements MolangVariableStorage {
     @Override
     public void set(String identifier, float value) {
         this.variables.put(identifier, value);
-    }
-
-    @Override
-    public boolean readonly() {
-        return false;
     }
 
 }

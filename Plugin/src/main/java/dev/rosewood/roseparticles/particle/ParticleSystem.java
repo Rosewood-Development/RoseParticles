@@ -2,6 +2,8 @@ package dev.rosewood.roseparticles.particle;
 
 import dev.omega.arcane.reference.ExpressionBindingContext;
 import dev.rosewood.roseparticles.component.ComponentType;
+import dev.rosewood.roseparticles.config.SettingKey;
+import dev.rosewood.roseparticles.datapack.StitchedTexture;
 import dev.rosewood.roseparticles.particle.config.ParticleFile;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,50 +16,63 @@ public class ParticleSystem {
     private final Entity attachedTo;
     private final Location origin;
     private final ParticleFile particleFile;
+    private final StitchedTexture texture;
 
     private final ExpressionBindingContext molangContext;
     private final EmitterInstance emitter;
     private final List<ParticleInstance> particles;
+    private final float deltaTime;
+    private boolean doneEmitting;
 
-    public ParticleSystem(Entity entity, ParticleFile particleFile) {
-        this.attachedTo = entity;
-        this.origin = null;
-        this.particleFile = particleFile;
-        this.molangContext = ExpressionBindingContext.create();
-        this.emitter = new EmitterInstance(this);
-        this.particles = new ArrayList<>();
+    public ParticleSystem(Entity entity, ParticleFile particleFile, StitchedTexture texture) {
+        this(entity, null, particleFile, texture);
     }
 
-    public ParticleSystem(Location origin, ParticleFile particleFile) {
-        this.attachedTo = null;
+    public ParticleSystem(Location origin, ParticleFile particleFile, StitchedTexture texture) {
+        this(null, origin, particleFile, texture);
+    }
+
+    private ParticleSystem(Entity entity, Location origin, ParticleFile particleFile, StitchedTexture texture) {
+        this.attachedTo = entity;
         this.origin = origin;
         this.particleFile = particleFile;
+        this.texture = texture;
         this.molangContext = ExpressionBindingContext.create();
         this.emitter = new EmitterInstance(this);
         this.particles = new ArrayList<>();
+        this.deltaTime = SettingKey.UPDATE_FREQUENCY.get() / 20F;
     }
 
-    public EmitterInstance getEmitter() {
+    protected EmitterInstance getEmitter() {
         return this.emitter;
+    }
+
+    protected ExpressionBindingContext getMolangContext() {
+        return this.molangContext;
+    }
+
+    protected StitchedTexture getTexture() {
+        return this.texture;
     }
 
     public void update() {
 //        List<ParticleEffect> newParticles = new ArrayList<>();
-//        this.particles.forEach(particleEffect -> {
-//            particleEffect.update(this);
-//            newParticles.addAll(particleEffect.createEmission());
-//        });
-//
-//        Iterator<ParticleEffect> particleIterator = this.particles.iterator();
-//        while (particleIterator.hasNext()) {
-//            ParticleEffect particleEffect = particleIterator.next();
-//            if (particleEffect.expired()) {
-//                particleEffect.remove();
-//                newParticles.addAll(particleEffect.createExpirationEffects());
-//                particleIterator.remove();
-//            }
-//        }
-//
+        if (!this.doneEmitting) {
+            this.emitter.update(this.deltaTime);
+            if (this.emitter.expired())
+                this.doneEmitting = true;
+        }
+
+        this.particles.removeIf(particle -> {
+            particle.update(this.deltaTime);
+            if (particle.expired()) {
+                particle.remove();
+                return true;
+            } else {
+                return false;
+            }
+        });
+
 //        this.particles.addAll(newParticles);
     }
 
@@ -66,9 +81,8 @@ public class ParticleSystem {
 //    }
 
     @Nullable
-    @SuppressWarnings("unchecked")
     public <T> T getComponent(ComponentType<T> componentType) {
-        return (T) this.particleFile.components().get(componentType);
+        return this.particleFile.getComponent(componentType);
     }
 
     public Location getOrigin() {
@@ -80,12 +94,8 @@ public class ParticleSystem {
         throw new IllegalStateException();
     }
 
-    public ExpressionBindingContext getMolangContext() {
-        return this.molangContext;
-    }
-
     public boolean isFinished() {
-        return this.particles.isEmpty();
+        return this.doneEmitting && this.particles.isEmpty();
     }
 
 }

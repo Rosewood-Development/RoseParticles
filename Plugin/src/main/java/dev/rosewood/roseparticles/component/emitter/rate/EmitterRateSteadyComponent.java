@@ -12,8 +12,8 @@ public record EmitterRateSteadyComponent(MolangExpression spawnRate,
 
     public static EmitterRateSteadyComponent parse(JsonElement jsonElement) throws MolangLexException, MolangParseException {
         JsonObject jsonObject = jsonElement.getAsJsonObject();
-        MolangExpression spawnRate = JsonHelper.parseMolang(jsonObject, "spawn_rate", "1");
-        MolangExpression maxParticles = JsonHelper.parseMolang(jsonObject, "max_particles", "50");
+        MolangExpression spawnRate = JsonHelper.parseMolang(jsonObject, "spawn_rate", 1F);
+        MolangExpression maxParticles = JsonHelper.parseMolang(jsonObject, "max_particles", 50F);
         return new EmitterRateSteadyComponent(spawnRate, maxParticles);
     }
 

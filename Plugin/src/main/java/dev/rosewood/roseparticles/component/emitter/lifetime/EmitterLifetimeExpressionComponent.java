@@ -12,8 +12,8 @@ public record EmitterLifetimeExpressionComponent(MolangExpression activationExpr
 
     public static EmitterLifetimeExpressionComponent parse(JsonElement jsonElement) throws MolangLexException, MolangParseException {
         JsonObject jsonObject = jsonElement.getAsJsonObject();
-        MolangExpression activationExpression = JsonHelper.parseMolang(jsonObject, "activation_expression", "1");
-        MolangExpression expirationExpression = JsonHelper.parseMolang(jsonObject, "expiration_expression", "0");
+        MolangExpression activationExpression = JsonHelper.parseMolang(jsonObject, "activation_expression", 1F);
+        MolangExpression expirationExpression = JsonHelper.parseMolang(jsonObject, "expiration_expression", 0F);
         return new EmitterLifetimeExpressionComponent(activationExpression, expirationExpression);
     }
 

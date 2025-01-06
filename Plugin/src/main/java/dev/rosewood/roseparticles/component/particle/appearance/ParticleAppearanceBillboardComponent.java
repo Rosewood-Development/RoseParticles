@@ -9,12 +9,14 @@ import dev.rosewood.roseparticles.component.model.MolangExpressionVector3;
 import dev.rosewood.roseparticles.component.model.ParticleBillboardDirectionMode;
 import dev.rosewood.roseparticles.component.model.ParticleBillboardFaceCameraMode;
 import dev.rosewood.roseparticles.util.JsonHelper;
+import javax.annotation.Nullable;
 
 public record ParticleAppearanceBillboardComponent(MolangExpressionVector2 size,
                                                    ParticleBillboardFaceCameraMode faceCameraMode,
                                                    ParticleBillboardDirectionMode direction,
                                                    float directionMinSpeedThreshold,
-                                                   MolangExpressionVector3 directionCustomDirection) {
+                                                   MolangExpressionVector3 directionCustomDirection,
+                                                   @Nullable ParticleAppearanceBillboardUV uv) {
 
     public static ParticleAppearanceBillboardComponent parse(JsonElement jsonElement) throws MolangLexException, MolangParseException {
         JsonObject jsonObject = jsonElement.getAsJsonObject();
@@ -42,7 +44,12 @@ public record ParticleAppearanceBillboardComponent(MolangExpressionVector2 size,
             }
         }
 
-        return new ParticleAppearanceBillboardComponent(size, faceCameraMode, direction, directionMinSpeedThreshold, directionCustomDirection);
+        ParticleAppearanceBillboardUV uv = null;
+        JsonElement uvElement = jsonObject.get("uv");
+        if (uvElement != null)
+            uv = ParticleAppearanceBillboardUV.parse(uvElement.getAsJsonObject());
+
+        return new ParticleAppearanceBillboardComponent(size, faceCameraMode, direction, directionMinSpeedThreshold, directionCustomDirection, uv);
     }
 
 }
