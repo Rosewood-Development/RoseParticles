@@ -3,6 +3,7 @@ package dev.rosewood.roseparticles.datapack;
 import dev.rosewood.rosegarden.RosePlugin;
 import dev.rosewood.roseparticles.RoseParticles;
 import dev.rosewood.roseparticles.component.ComponentType;
+import dev.rosewood.roseparticles.component.model.Vector2;
 import dev.rosewood.roseparticles.particle.config.ParticleFile;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
@@ -110,7 +111,43 @@ public class TextureStitcher {
                 }
 
                 this.textureSymbolMappings.put(identifier, new StitchedTexture(identifier, dimension, fileNames, symbols));
-                continue;
+            } else {
+                File file = new File(fileFolder, textureName + ".png");
+                if (!file.exists()) {
+                    log.warning(identifier + " references a texture that doesn't exist: " + fileName);
+                    continue;
+                }
+
+                String newTextureName = "%s.png".formatted(textureId);
+                File newTexturePath = new File(packTexturesDirectory, newTextureName);
+
+                Dimension dimension;
+                try (FileInputStream inputStream = new FileInputStream(file)) {
+                    BufferedImage bufferedImage = ImageIO.read(inputStream);
+                    dimension = new Dimension(bufferedImage.getWidth(), bufferedImage.getHeight());
+
+                    int textureWidth = uv.textureWidth();
+                    int textureHeight = uv.textureHeight();
+
+                    Vector2 uvStart;
+                    Vector2 uvSize;
+                    if (textureWidth == 1 && textureHeight == 1) {
+                        uvStart = new Vector2(uv.uv().x() * dimension.width, uv.uv().y() * dimension.height);
+                        uvSize = new Vector2(uv.uvSize().x() * dimension.width, uv.uvSize().y() * dimension.height);
+                    } else {
+                        uvStart = uv.uv();
+                        uvSize = uv.uvSize();
+                    }
+
+                    BufferedImage texture = bufferedImage.getSubimage(Math.round(uvStart.x()), Math.round(uvStart.y()), Math.round(uvSize.x()), Math.round(uvSize.y()));
+                    dimension = new Dimension(texture.getWidth(), texture.getHeight());
+                    ImageIO.write(texture, "png", newTexturePath);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                this.textureSymbolMappings.put(identifier, new StitchedTexture(identifier, dimension, List.of(newTextureName), List.of((char) textureId)));
+                textureId++;
             }
         }
     }
@@ -134,7 +171,7 @@ public class TextureStitcher {
 
     private static List<File> getFilesForName(String targetName, File directory) {
         // Look for exact match
-        File exactFile = new File(directory, targetName);
+        File exactFile = new File(directory, targetName + ".png");
         if (exactFile.exists())
             return List.of(exactFile);
 

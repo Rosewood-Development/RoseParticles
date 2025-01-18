@@ -1,12 +1,19 @@
 package dev.rosewood.roseparticles.particle;
 
 import dev.omega.arcane.reference.ExpressionBindingContext;
+import dev.rosewood.roseparticles.RoseParticles;
 import dev.rosewood.roseparticles.component.ComponentType;
+import dev.rosewood.roseparticles.component.curve.CurveDefinition;
 import dev.rosewood.roseparticles.config.SettingKey;
 import dev.rosewood.roseparticles.datapack.StitchedTexture;
 import dev.rosewood.roseparticles.particle.config.ParticleFile;
+import dev.rosewood.roseparticles.particle.curve.CatmullRomCurve;
+import dev.rosewood.roseparticles.particle.curve.Curve;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -21,6 +28,7 @@ public class ParticleSystem {
     private final ExpressionBindingContext molangContext;
     private final EmitterInstance emitter;
     private final List<ParticleInstance> particles;
+    private final Map<String, Curve> curves;
     private final float deltaTime;
     private boolean doneEmitting;
 
@@ -38,30 +46,71 @@ public class ParticleSystem {
         this.particleFile = particleFile;
         this.texture = texture;
         this.molangContext = ExpressionBindingContext.create();
-        this.emitter = new EmitterInstance(this);
-        this.particles = new ArrayList<>();
+        this.particles = new LinkedList<>();
+        this.curves = new HashMap<>();
         this.deltaTime = SettingKey.UPDATE_FREQUENCY.get() / 20F;
+
+        List<CurveDefinition> curveDefinitions = this.particleFile.curves();
+        for (CurveDefinition curveDefinition : curveDefinitions) {
+            String variableName = curveDefinition.name();
+            int dotIndex = variableName.indexOf('.');
+            if (dotIndex == -1) {
+                RoseParticles.getInstance().getLogger().info("Ignoring curve with invalid variable name " + variableName);
+                continue;
+            }
+
+            String query = variableName.substring(0, dotIndex);
+            switch (query) {
+                case "variable", "v", "temp", "t" -> {}
+                default -> {
+                    RoseParticles.getInstance().getLogger().info("Ignoring curve with invalid variable name " + variableName);
+                    continue;
+                }
+            }
+
+            String name = variableName.substring(dotIndex + 1);
+
+            Curve curve = switch (curveDefinition.type()) {
+                case LINEAR -> throw new IllegalStateException("Unsupported");
+                case BEZIER -> throw new IllegalStateException("Unsupported");
+                case BEZIER_CHAIN -> throw new IllegalStateException("Unsupported");
+                case CATMULL_ROM -> new CatmullRomCurve(curveDefinition.input(), curveDefinition.horizontalRange(), curveDefinition.nodes());
+            };
+            this.curves.put(name, curve);
+        }
+
+        this.emitter = new EmitterInstance(this);
     }
 
-    protected EmitterInstance getEmitter() {
+    public String getIdentifier() {
+        return this.particleFile.description().identifier();
+    }
+
+    public EmitterInstance getEmitter() {
         return this.emitter;
     }
 
-    protected ExpressionBindingContext getMolangContext() {
+    public Map<String, Curve> getCurves() {
+        return this.curves;
+    }
+
+    public ExpressionBindingContext getMolangContext() {
         return this.molangContext;
     }
 
-    protected StitchedTexture getTexture() {
+    public StitchedTexture getTexture() {
         return this.texture;
     }
 
     public void update() {
-//        List<ParticleEffect> newParticles = new ArrayList<>();
+        List<ParticleInstance> newParticles = new ArrayList<>();
         if (!this.doneEmitting) {
-            this.emitter.update(this.deltaTime);
+            newParticles.addAll(this.emitter.update(this.deltaTime));
             if (this.emitter.expired())
                 this.doneEmitting = true;
         }
+
+        this.particles.addAll(newParticles);
 
         this.particles.removeIf(particle -> {
             particle.update(this.deltaTime);
@@ -72,8 +121,12 @@ public class ParticleSystem {
                 return false;
             }
         });
+    }
 
-//        this.particles.addAll(newParticles);
+    public void remove() {
+        this.doneEmitting = true;
+        this.particles.forEach(ParticleInstance::remove);
+        this.particles.clear();
     }
 
 //    public void addParticle(ParticleEffect particleEffect) {
@@ -96,6 +149,10 @@ public class ParticleSystem {
 
     public boolean isFinished() {
         return this.doneEmitting && this.particles.isEmpty();
+    }
+
+    public int getParticleCount() {
+        return this.particles.size();
     }
 
 }

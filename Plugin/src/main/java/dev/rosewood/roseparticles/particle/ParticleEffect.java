@@ -12,11 +12,6 @@ public abstract class ParticleEffect implements MolangVariableStorage {
         this.variables = new HashMap<>();
     }
 
-    /**
-     * Updates this ParticleEffect
-     */
-    public abstract void update(float deltaTime);
-
     @Override
     public float get(String identifier) {
         return this.variables.getOrDefault(identifier, 0F);

@@ -50,9 +50,14 @@ public record ReferenceEvaluationExpression(ReferenceType type, String value) im
                 if (value instanceof MolangVariableStorage variableStorage)
                     variableStorages.add(variableStorage);
 
+            // Prioritize a storage that already contains the variable
             for (MolangVariableStorage variableStorage : variableStorages)
                 if (variableStorage.has(value))
                     return variableStorage.createEvaluationExpression(value);
+
+            // Fall back to the primary storage if available
+            if (!variableStorages.isEmpty())
+                return variableStorages.getFirst().createEvaluationExpression(value);
         } else if (type == ReferenceType.TEMP) {
             MolangVariableStorage tempVariableStorage = context.getTempVariableStorage();
             return tempVariableStorage.createEvaluationExpression(value);

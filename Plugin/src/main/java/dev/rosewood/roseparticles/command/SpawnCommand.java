@@ -48,6 +48,7 @@ public class SpawnCommand extends BaseRoseCommand {
     @Override
     protected CommandInfo createCommandInfo() {
         return CommandInfo.builder("spawn")
+                .descriptionKey("spawn-command-description")
                 .permission("roseparticles.spawn")
                 .arguments(ArgumentsDefinition.builder()
                         .required("particle", ParticleFileArgumentHandler.INSTANCE)

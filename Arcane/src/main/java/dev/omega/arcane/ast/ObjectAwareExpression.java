@@ -14,11 +14,6 @@ public abstract class ObjectAwareExpression<T> implements MolangExpression {
     }
 
     @Override
-    public MolangExpression simplify() {
-        return this;
-    }
-
-    @Override
     public MolangExpression bind(ExpressionBindingContext context, Object[] values) {
         return this;
     }

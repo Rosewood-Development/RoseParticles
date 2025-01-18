@@ -57,7 +57,6 @@ public class ParticleManager extends Manager implements Listener {
                 }
             }
         }
-        this.rosePlugin.getLogger().info(this.particleFiles.toString());
 
         // Process textures
         File texturesFolder = new File(this.rosePlugin.getDataFolder(), "textures");
@@ -76,6 +75,9 @@ public class ParticleManager extends Manager implements Listener {
 
     @Override
     public void disable() {
+        this.particleSystems.forEach(ParticleSystem::remove);
+        this.particleSystems.clear();
+
         this.particleTask.cancel();
         this.particleTask = null;
 
@@ -95,8 +97,14 @@ public class ParticleManager extends Manager implements Listener {
 
     public void update() {
         this.particleSystems.removeIf(particleSystem -> {
-            particleSystem.update();
-            return particleSystem.isFinished();
+            try {
+                particleSystem.update();
+                return particleSystem.isFinished();
+            } catch (Exception e) {
+                this.rosePlugin.getLogger().warning("Particle system " + particleSystem.getIdentifier() + " threw an exception and has been forcefully removed");
+                e.printStackTrace();
+                return true;
+            }
         });
     }
 

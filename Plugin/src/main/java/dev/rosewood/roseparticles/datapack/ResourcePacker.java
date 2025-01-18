@@ -94,7 +94,7 @@ public final class ResourcePacker {
                     jsonWriter.name("file");
                     jsonWriter.value(rosePlugin.getName().toLowerCase() + ":particle/" + relativePath);
                     jsonWriter.name("ascent");
-                    jsonWriter.value(texture.dimension().height);
+                    jsonWriter.value(0);
                     jsonWriter.name("height");
                     jsonWriter.value(texture.dimension().height);
                     jsonWriter.name("chars");

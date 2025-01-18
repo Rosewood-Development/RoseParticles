@@ -3,14 +3,29 @@ package dev.rosewood.roseparticles.component.model;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import dev.omega.arcane.ast.ConstantExpression;
 import dev.omega.arcane.ast.MolangExpression;
 import dev.omega.arcane.exception.MolangLexException;
 import dev.omega.arcane.exception.MolangParseException;
 import dev.omega.arcane.parser.MolangParser;
+import dev.omega.arcane.reference.ExpressionBindingContext;
+import org.bukkit.util.Vector;
 
 public record MolangExpressionVector3(MolangExpression x,
                                       MolangExpression y,
                                       MolangExpression z) {
+
+    public MolangExpressionVector3 bind(ExpressionBindingContext context, Object... values) {
+        return new MolangExpressionVector3(
+                this.x.bind(context, values),
+                this.y.bind(context, values),
+                this.z.bind(context, values)
+        );
+    }
+
+    public Vector evaluate() {
+        return new Vector(this.x.evaluate(), this.y.evaluate(), this.z.evaluate());
+    }
 
     public static MolangExpressionVector3 parse(JsonObject jsonObject, String property) throws MolangLexException, MolangParseException {
         JsonElement element = jsonObject.get(property);
@@ -42,19 +57,19 @@ public record MolangExpressionVector3(MolangExpression x,
         return new MolangExpressionVector3(x, y, z);
     }
 
-    public static MolangExpressionVector3 empty() throws MolangLexException, MolangParseException {
+    public static MolangExpressionVector3 empty() {
         return new MolangExpressionVector3(
-                MolangParser.parse("0"),
-                MolangParser.parse("0"),
-                MolangParser.parse("0")
+                new ConstantExpression(0),
+                new ConstantExpression(0),
+                new ConstantExpression(0)
         );
     }
 
-    public static MolangExpressionVector3 defaultPlaneNormal() throws MolangLexException, MolangParseException {
+    public static MolangExpressionVector3 defaultPlaneNormal() {
         return new MolangExpressionVector3(
-                MolangParser.parse("0"),
-                MolangParser.parse("1"),
-                MolangParser.parse("0")
+                new ConstantExpression(0),
+                new ConstantExpression(1),
+                new ConstantExpression(0)
         );
     }
 

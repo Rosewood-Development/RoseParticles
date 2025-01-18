@@ -86,11 +86,33 @@ public final class JsonHelper {
                 throw new IllegalArgumentException("Invalid color array length, must be 3 or 4 but found " + jsonArray.size());
             }
         } else if (element.isJsonPrimitive()) {
-            try {
-                return Color.decode(element.getAsString());
-            } catch (NumberFormatException ignored) { }
+            Color color = hexToColor(element.getAsString());
+            if (color != null)
+                return color;
         }
         return Color.WHITE;
+    }
+
+    public static Color hexToColor(String hex) {
+        if (hex.startsWith("#"))
+            hex = hex.substring(1);
+
+        if (hex.length() == 6) {
+            // #RRGGBB format
+            int r = Integer.parseInt(hex.substring(0, 2), 16);
+            int g = Integer.parseInt(hex.substring(2, 4), 16);
+            int b = Integer.parseInt(hex.substring(4, 6), 16);
+            return new Color(r, g, b);
+        } else if (hex.length() == 8) {
+            // #AARRGGBB format
+            int a = Integer.parseInt(hex.substring(0, 2), 16);
+            int r = Integer.parseInt(hex.substring(2, 4), 16);
+            int g = Integer.parseInt(hex.substring(4, 6), 16);
+            int b = Integer.parseInt(hex.substring(6, 8), 16);
+            return new Color(r, g, b, a);
+        } else {
+            return null;
+        }
     }
 
     public static List<Material> parseBlockList(JsonElement element) {

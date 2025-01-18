@@ -109,9 +109,20 @@ public class MolangParser {
     @ApiStatus.AvailableSince("1.0.0")
     public static MolangExpression parse(LexedMolang input, boolean simplify) throws MolangParseException {
         MolangParser parser = new MolangParser(input);
-        MolangExpression expression = parser.expression();
+        MolangExpression expression = parser.compoundExpression();
         if(simplify) {
             expression = expression.simplify();
+        }
+
+        return expression;
+    }
+
+    private MolangExpression compoundExpression() throws MolangParseException {
+        MolangExpression expression = expression();
+
+        if (match(SEMICOLON) && hasNext()) {
+            MolangExpression expression2 = compoundExpression();
+            return new CompoundExpression(expression, expression2);
         }
 
         return expression;
@@ -351,6 +362,10 @@ public class MolangParser {
 
     private MolangTokenInstance previous() {
         return input.tokens().get(cursor - 1);
+    }
+
+    private boolean hasNext() {
+        return input.tokens().size() > cursor;
     }
 
     /**
