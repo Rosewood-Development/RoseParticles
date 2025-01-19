@@ -90,13 +90,16 @@ public class EmitterLifetimeController {
         return false;
     }
 
-    public void update() {
+    /**
+     * @return true if this update caused the age to reset to 0
+     */
+    public boolean update() {
         EmitterInstance emitter = this.particleSystem.getEmitter();
         float age = emitter.get("age");
         if (emitter.has("lifetime") && age >= emitter.get("lifetime")) {
             if (this.once) {
                 this.finished = true;
-                return;
+                return false;
             }
 
             if (this.sleeping) {
@@ -109,8 +112,10 @@ public class EmitterLifetimeController {
                 emitter.set("age", age - emitter.get("lifetime"));
             } else {
                 emitter.set("age", 0);
+                return true;
             }
         }
+        return false;
     }
 
 }

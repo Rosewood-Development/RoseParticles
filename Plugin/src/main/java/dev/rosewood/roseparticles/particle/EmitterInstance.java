@@ -27,6 +27,8 @@ public class EmitterInstance extends ParticleEffect {
     private boolean emitOnce;
     private int instantEmitAmount;
     private boolean emitted;
+    private float particlePercentage;
+    private float lastParticleAge;
 
     public EmitterInstance(ParticleSystem particleSystem) {
         this.particleSystem = particleSystem;
@@ -102,28 +104,36 @@ public class EmitterInstance extends ParticleEffect {
             this.set("age", this.get("age") + deltaTime);
             this.emitted = true;
         } else if (this.rateNumParticlesExpression != null) {
-            int rateNumParticles = Math.round(this.rateNumParticlesExpression.evaluate() * deltaTime);
-            int rateMaxParticles = (int) this.rateMaxParticlesExpression.evaluate();
+            float rateNumParticles = this.rateNumParticlesExpression.evaluate();
+            float rateMaxParticles = this.rateMaxParticlesExpression.evaluate();
 
             int particleCount = this.particleSystem.getParticleCount();
             if (this.lifetimeController.emitting()) {
-                float deltaStepSize = deltaTime / rateNumParticles;
-                int i = 0;
-                for (; i < rateNumParticles; i++) {
-                    this.set("age", this.get("age") + deltaStepSize);
-                    emission.add(this.emitter.emit());
-                    if (particleCount >= rateMaxParticles)
+                float age = this.get("age");
+                this.particlePercentage += rateNumParticles * deltaTime;
+                int particlesToSpawn = (int) this.particlePercentage;
+                this.particlePercentage -= particlesToSpawn;
+                float interval = 1 / rateNumParticles;
+                for (int i = 0; i < particlesToSpawn; i++) {
+                    if (particleCount >= rateMaxParticles) {
+                        // Skip remaining but still account for the age increments
+                        this.lastParticleAge += (particlesToSpawn - i) * interval;
                         break;
+                    }
+                    float nextAge = this.lastParticleAge + interval;
+                    this.set("age", nextAge);
+                    this.lastParticleAge = nextAge;
+                    emission.add(this.emitter.emit());
+                    particleCount++;
                 }
-
-                if (i != rateNumParticles)
-                    this.set("age", this.get("age") + (deltaStepSize * (rateNumParticles - i)));
+                this.set("age", age + deltaTime);
             } else {
                 this.set("age", this.get("age") + deltaTime);
             }
         }
 
-        this.lifetimeController.update();
+        if (this.lifetimeController.update())
+            this.lastParticleAge = 0;
 
         return emission;
     }
