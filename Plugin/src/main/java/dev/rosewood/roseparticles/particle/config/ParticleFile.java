@@ -15,7 +15,8 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-public record ParticleFile(String formatVersion,
+public record ParticleFile(File file,
+                           String formatVersion,
                            ParticleDescription description,
                            List<CurveDefinition> curves,
                            Map<ComponentType<?>, Object> components) {
@@ -71,7 +72,7 @@ public record ParticleFile(String formatVersion,
                 }
             }
 
-            return new ParticleFile(formatVersion, description, curves, components);
+            return new ParticleFile(file, formatVersion, description, curves, components);
         } catch (Exception e) {
             RoseParticles.getInstance().getLogger().warning("Invalid particle file: %s".formatted(file.getName()));
             e.printStackTrace();

@@ -1,3 +1,8 @@
+plugins {
+    id 'maven-publish'
+    id 'java-library'
+}
+
 group = 'dev.omega'
 version = '0.1.5-SNAPSHOT'
 
@@ -16,7 +21,7 @@ test {
 
 publishing {
     publications {
-        shadow(MavenPublication) {
+        maven(MavenPublication) {
             from components.java
             artifactId = 'arcane'
             pom {
@@ -24,8 +29,4 @@ publishing {
             }
         }
     }
-}
-
-shadowJar {
-    archiveClassifier.set(null)
 }

@@ -1,7 +1,9 @@
 ### Fork Notes
 The original project is here: https://github.com/Draylar/arcane
-This is a fork of Arcane which aims to add support for the following:
+<br>
+This is a fork of Arcane which adds support for the following:
 - Variable/temp assignment expressions
+- Multiple expressions separated by semicolons (`;`)
 
 ### Arcane
 

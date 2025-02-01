@@ -5,6 +5,7 @@ import dev.omega.arcane.reference.ExpressionBindingContext;
 import dev.rosewood.roseparticles.component.ComponentType;
 import dev.rosewood.roseparticles.particle.controller.EmitterLifetimeController;
 import dev.rosewood.roseparticles.particle.curve.Curve;
+import dev.rosewood.roseparticles.particle.emitter.DiscEmitter;
 import dev.rosewood.roseparticles.particle.emitter.Emitter;
 import dev.rosewood.roseparticles.particle.emitter.PointEmitter;
 import dev.rosewood.roseparticles.util.ParticleUtils;
@@ -62,8 +63,12 @@ public class EmitterInstance extends ParticleEffect {
 
         Emitter emitter = null;
         var pointEmitterComponent = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_POINT);
-        if (pointEmitterComponent != null)
+        var discEmitterComponent = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_DISC);
+        if (pointEmitterComponent != null) {
             emitter = new PointEmitter(particleSystem, pointEmitterComponent);
+        } else if (discEmitterComponent != null) {
+            emitter = new DiscEmitter(particleSystem, discEmitterComponent);
+        }
 
         var rateSteadyComponent = particleSystem.getComponent(ComponentType.EMITTER_RATE_STEADY);
         if (rateSteadyComponent != null) {
@@ -168,7 +173,7 @@ public class EmitterInstance extends ParticleEffect {
 
     private static String mapIdentifier(String identifier) {
         if (identifier.startsWith("emitter_"))
-            return identifier.substring("emitter_".length());
+            return identifier.substring(8);
         return identifier;
     }
 

@@ -6,20 +6,25 @@ import dev.rosewood.roseparticles.component.ComponentType;
 import dev.rosewood.roseparticles.component.curve.CurveDefinition;
 import dev.rosewood.roseparticles.config.SettingKey;
 import dev.rosewood.roseparticles.datapack.StitchedTexture;
+import dev.rosewood.roseparticles.manager.HologramManager;
+import dev.rosewood.roseparticles.nms.hologram.Hologram;
 import dev.rosewood.roseparticles.particle.config.ParticleFile;
 import dev.rosewood.roseparticles.particle.curve.CatmullRomCurve;
 import dev.rosewood.roseparticles.particle.curve.Curve;
+import dev.rosewood.roseparticles.particle.curve.LinearCurve;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 
 public class ParticleSystem {
 
+    private final HologramManager hologramManager;
     private final Entity attachedTo;
     private final Location origin;
     private final ParticleFile particleFile;
@@ -32,15 +37,16 @@ public class ParticleSystem {
     private final float deltaTime;
     private boolean doneEmitting;
 
-    public ParticleSystem(Entity entity, ParticleFile particleFile, StitchedTexture texture) {
-        this(entity, null, particleFile, texture);
+    public ParticleSystem(HologramManager hologramManager, Entity entity, ParticleFile particleFile, StitchedTexture texture) {
+        this(hologramManager, entity, null, particleFile, texture);
     }
 
-    public ParticleSystem(Location origin, ParticleFile particleFile, StitchedTexture texture) {
-        this(null, origin, particleFile, texture);
+    public ParticleSystem(HologramManager hologramManager, Location origin, ParticleFile particleFile, StitchedTexture texture) {
+        this(hologramManager, null, origin, particleFile, texture);
     }
 
-    private ParticleSystem(Entity entity, Location origin, ParticleFile particleFile, StitchedTexture texture) {
+    private ParticleSystem(HologramManager hologramManager, Entity entity, Location origin, ParticleFile particleFile, StitchedTexture texture) {
+        this.hologramManager = hologramManager;
         this.attachedTo = entity;
         this.origin = origin;
         this.particleFile = particleFile;
@@ -71,7 +77,7 @@ public class ParticleSystem {
             String name = variableName.substring(dotIndex + 1);
 
             Curve curve = switch (curveDefinition.type()) {
-                case LINEAR -> throw new IllegalStateException("Unsupported");
+                case LINEAR -> new LinearCurve(curveDefinition.input(), curveDefinition.horizontalRange(), curveDefinition.nodes());
                 case BEZIER -> throw new IllegalStateException("Unsupported");
                 case BEZIER_CHAIN -> throw new IllegalStateException("Unsupported");
                 case CATMULL_ROM -> new CatmullRomCurve(curveDefinition.input(), curveDefinition.horizontalRange(), curveDefinition.nodes());
@@ -100,6 +106,14 @@ public class ParticleSystem {
 
     public StitchedTexture getTexture() {
         return this.texture;
+    }
+
+    protected Hologram createHologram(Consumer<Hologram> init) {
+        return this.hologramManager.createHologram(init);
+    }
+
+    protected void deleteHologram(Hologram hologram) {
+        this.hologramManager.deleteHologram(hologram);
     }
 
     public void update() {

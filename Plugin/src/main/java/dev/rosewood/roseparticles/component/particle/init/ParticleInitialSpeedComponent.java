@@ -7,13 +7,16 @@ import dev.omega.arcane.exception.MolangParseException;
 import dev.omega.arcane.parser.MolangParser;
 import dev.rosewood.roseparticles.component.model.MolangExpressionVector3;
 
-public record ParticleInitialSpeedComponent(MolangExpression initialSpeed,
-                                            MolangExpressionVector3 initialSpeedVector) {
+public record ParticleInitialSpeedComponent(MolangExpressionVector3 initialSpeedVector) {
 
     public static ParticleInitialSpeedComponent parse(JsonElement jsonElement) throws MolangLexException, MolangParseException {
-        MolangExpression initialSpeed = MolangParser.parse(jsonElement.getAsString());
-        MolangExpressionVector3 initialSpeedVector = MolangExpressionVector3.parse(jsonElement);
-        return new ParticleInitialSpeedComponent(initialSpeed, initialSpeedVector);
+        if (jsonElement.isJsonPrimitive()) {
+            MolangExpression initialSpeed = MolangParser.parse(jsonElement.getAsString());
+            return new ParticleInitialSpeedComponent(new MolangExpressionVector3(initialSpeed));
+        } else {
+            MolangExpressionVector3 initialSpeedVector = MolangExpressionVector3.parse(jsonElement);
+            return new ParticleInitialSpeedComponent(initialSpeedVector);
+        }
     }
 
 }

@@ -32,6 +32,10 @@ public final class ResourcePacker {
             if (!mcmeta.exists())
                 writeMcMetaFile(mcmeta);
 
+            File packPng = new File(resourcePack, "pack.png");
+            if (!packPng.exists())
+                rosePlugin.saveResource("pack/pack.png", false);
+
             File texturesFolder = new File(resourcePack, "assets/" + rosePlugin.getName().toLowerCase() + "/textures/particle");
 
             File fontFolder = new File(resourcePack, "assets/" + rosePlugin.getName().toLowerCase() + "/font");

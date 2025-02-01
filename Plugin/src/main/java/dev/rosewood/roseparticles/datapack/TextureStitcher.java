@@ -45,6 +45,12 @@ public class TextureStitcher {
             var description = particleFile.description();
             var renderParameters = description.renderParameters();
             String identifier = description.identifier();
+            String fileName = particleFile.file().getName();
+
+            if (this.textureSymbolMappings.containsKey(identifier)) {
+                log.warning(identifier + " - identifier is already taken by another particle file, ignoring this file: " + fileName);
+                continue;
+            }
 
             var appearanceBillboard = particleFile.getComponent(ComponentType.PARTICLE_APPEARANCE_BILLBOARD);
             if (appearanceBillboard == null) {
@@ -52,17 +58,17 @@ public class TextureStitcher {
                 continue;
             }
 
-            String fileName = renderParameters.texturePath();
-            if (!fileName.startsWith("textures/")) {
-                log.warning(identifier + " references a file texture outside of the textures directory: " + fileName);
+            String textureFileName = renderParameters.texturePath();
+            if (!textureFileName.startsWith("textures/")) {
+                log.warning(identifier + " references a file texture outside of the textures directory: " + textureFileName);
                 continue;
             }
 
-            String texturePath = fileName.substring("textures/".length());
+            String texturePath = textureFileName.substring("textures/".length());
 
             File fileFolder = new File(texturesDirectory, texturePath).getParentFile();
             if (!fileFolder.exists()) {
-                log.warning(identifier + " references a directory that doesn't exist: " + fileName);
+                log.warning(identifier + " references a directory that doesn't exist: " + textureFileName);
                 continue;
             }
 
@@ -79,7 +85,7 @@ public class TextureStitcher {
                 // Full scale texture
                 List<File> files = getFilesForName(textureName, fileFolder);
                 if (files.isEmpty()) {
-                    log.warning(identifier + " references a texture that doesn't exist: " + fileName);
+                    log.warning(identifier + " references a texture that doesn't exist: " + textureFileName);
                     continue;
                 }
 
@@ -110,11 +116,11 @@ public class TextureStitcher {
                     textureId++;
                 }
 
-                this.textureSymbolMappings.put(identifier, new StitchedTexture(identifier, dimension, fileNames, symbols));
+                this.textureSymbolMappings.put(identifier, new StitchedTexture(Vector2.empty(), new Vector2(dimension.width, dimension.height), dimension, fileNames, symbols));
             } else {
                 File file = new File(fileFolder, textureName + ".png");
                 if (!file.exists()) {
-                    log.warning(identifier + " references a texture that doesn't exist: " + fileName);
+                    log.warning(identifier + " references a texture that doesn't exist: " + textureFileName);
                     continue;
                 }
 
@@ -122,6 +128,8 @@ public class TextureStitcher {
                 File newTexturePath = new File(packTexturesDirectory, newTextureName);
 
                 Dimension dimension;
+                Vector2 uvStart;
+                Vector2 uvSize;
                 try (FileInputStream inputStream = new FileInputStream(file)) {
                     BufferedImage bufferedImage = ImageIO.read(inputStream);
                     dimension = new Dimension(bufferedImage.getWidth(), bufferedImage.getHeight());
@@ -129,8 +137,6 @@ public class TextureStitcher {
                     int textureWidth = uv.textureWidth();
                     int textureHeight = uv.textureHeight();
 
-                    Vector2 uvStart;
-                    Vector2 uvSize;
                     if (textureWidth == 1 && textureHeight == 1) {
                         uvStart = new Vector2(uv.uv().x() * dimension.width, uv.uv().y() * dimension.height);
                         uvSize = new Vector2(uv.uvSize().x() * dimension.width, uv.uvSize().y() * dimension.height);
@@ -146,7 +152,7 @@ public class TextureStitcher {
                     throw new RuntimeException(e);
                 }
 
-                this.textureSymbolMappings.put(identifier, new StitchedTexture(identifier, dimension, List.of(newTextureName), List.of((char) textureId)));
+                this.textureSymbolMappings.put(identifier, new StitchedTexture(uvStart, uvSize, dimension, List.of(newTextureName), List.of((char) textureId)));
                 textureId++;
             }
         }

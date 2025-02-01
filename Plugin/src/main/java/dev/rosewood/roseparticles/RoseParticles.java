@@ -6,6 +6,7 @@ import dev.rosewood.rosegarden.manager.Manager;
 import dev.rosewood.rosegarden.utils.NMSUtil;
 import dev.rosewood.roseparticles.config.SettingKey;
 import dev.rosewood.roseparticles.manager.CommandManager;
+import dev.rosewood.roseparticles.manager.HologramManager;
 import dev.rosewood.roseparticles.manager.LocaleManager;
 import dev.rosewood.roseparticles.manager.ParticleManager;
 import java.util.List;
@@ -33,7 +34,7 @@ public class RoseParticles extends RosePlugin {
     @Override
     public void enable() {
         if (NMSUtil.getVersionNumber() < 19 || (NMSUtil.getVersionNumber() == 19 && NMSUtil.getMinorVersionNumber() != 4))
-            this.getLogger().severe("This server version does not support display entities. The plugin has been disabled.");
+            this.getLogger().severe("This server version does not support display entities. The plugin will not work properly.");
     }
 
     @Override
@@ -44,6 +45,7 @@ public class RoseParticles extends RosePlugin {
     @Override
     protected List<Class<? extends Manager>> getManagerLoadPriority() {
         return List.of(
+                HologramManager.class,
                 ParticleManager.class
         );
     }

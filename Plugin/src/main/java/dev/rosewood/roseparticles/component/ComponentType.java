@@ -51,7 +51,7 @@ public final class ComponentType<T> {
     /** [ ] */ public static final ComponentType<EmitterShapeBoxComponent> EMITTER_SHAPE_BOX = create("minecraft:emitter_shape_box", EmitterShapeBoxComponent::parse);
     /** [ ] */ public static final ComponentType<EmitterShapeCustomComponent> EMITTER_SHAPE_CUSTOM = create("minecraft:emitter_shape_custom", EmitterShapeCustomComponent::parse);
     /** [ ] */ public static final ComponentType<EmitterShapeEntityAABBComponent> EMITTER_SHAPE_ENTITY_AABB = create("minecraft:emitter_shape_entity_aabb", EmitterShapeEntityAABBComponent::parse);
-    /** [ ] */ public static final ComponentType<EmitterShapeDiscComponent> EMITTER_SHAPE_DISC = create("minecraft:emitter_shape_disc", EmitterShapeDiscComponent::parse);
+    /** [X] */ public static final ComponentType<EmitterShapeDiscComponent> EMITTER_SHAPE_DISC = create("minecraft:emitter_shape_disc", EmitterShapeDiscComponent::parse);
     /** [X] */ public static final ComponentType<ParticleInitialSpeedComponent> PARTICLE_INITIAL_SPEED = create("minecraft:particle_initial_speed", ParticleInitialSpeedComponent::parse);
     /** [X] */ public static final ComponentType<ParticleInitialSpinComponent> PARTICLE_INITIAL_SPIN = create("minecraft:particle_initial_spin", ParticleInitialSpinComponent::parse);
     /** [ ] */ public static final ComponentType<ParticleInitializationComponent> PARTICLE_INITIALIZATION = create("minecraft:partial_initialization", ParticleInitializationComponent::parse);
@@ -60,7 +60,7 @@ public final class ComponentType<T> {
     /** [ ] */ public static final ComponentType<ParticleMotionCollisionComponent> PARTICLE_MOTION_COLLISION = create("minecraft:particle_motion_collision", ParticleMotionCollisionComponent::parse);
     /** [ ] */ public static final ComponentType<ParticleAppearanceBillboardComponent> PARTICLE_APPEARANCE_BILLBOARD = create("minecraft:particle_appearance_billboard", ParticleAppearanceBillboardComponent::parse);
     /** [X] */ public static final ComponentType<ParticleAppearanceTintingComponent> PARTICLE_APPEARANCE_TINTING = create("minecraft:particle_appearance_tinting", ParticleAppearanceTintingComponent::parse);
-    /** [ ] */ public static final ComponentType<ParticleAppearanceLightingComponent> PARTICLE_APPEARANCE_LIGHTING = create("minecraft:particle_appearance_lighting", ParticleAppearanceLightingComponent::parse);
+    /** [X] */ public static final ComponentType<ParticleAppearanceLightingComponent> PARTICLE_APPEARANCE_LIGHTING = create("minecraft:particle_appearance_lighting", ParticleAppearanceLightingComponent::parse);
     /** [X] */ public static final ComponentType<ParticleLifetimeExpressionComponent> PARTICLE_LIFETIME_EXPRESSION = create("minecraft:particle_lifetime_expression", ParticleLifetimeExpressionComponent::parse);
     /** [ ] */ public static final ComponentType<ParticleLifetimeEventsComponent> PARTICLE_LIFETIME_EVENTS = create("minecraft:particle_lifetime_events", ParticleLifetimeEventsComponent::parse);
     /** [ ] */ public static final ComponentType<ParticleKillPlaneComponent> PARTICLE_KILL_PLANE = create("minecraft:particle_kill_plane", ParticleKillPlaneComponent::parse);

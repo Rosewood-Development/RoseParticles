@@ -15,6 +15,10 @@ public record MolangExpressionVector3(MolangExpression x,
                                       MolangExpression y,
                                       MolangExpression z) {
 
+    public MolangExpressionVector3(MolangExpression value) {
+        this(value, value, value);
+    }
+
     public MolangExpressionVector3 bind(ExpressionBindingContext context, Object... values) {
         return new MolangExpressionVector3(
                 this.x.bind(context, values),

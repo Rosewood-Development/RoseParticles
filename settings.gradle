@@ -2,3 +2,5 @@ rootProject.name = 'RoseParticles'
 
 include('Plugin')
 include('Arcane')
+include('NMS:Wrapper')
+include('NMS:v1_21_R3')

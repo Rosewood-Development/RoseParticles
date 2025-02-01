@@ -1,18 +1,23 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
+plugins {
+    id 'com.gradleup.shadow'
+}
+
 group = 'dev.rosewood'
 
 dependencies {
     compileOnly project(':Arcane')
-    compileOnly 'io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT'
+    compileOnly project(':NMS:Wrapper')
+    compileOnly "io.papermc.paper:paper-api:$spigotVersion-R0.1-SNAPSHOT"
 
-    api 'dev.rosewood:rosegarden:1.4.7-SNAPSHOT'
+    api "dev.rosewood:rosegarden:$rosegardenVersion"
 }
 
 processResources {
     from (sourceSets.main.resources.srcDirs) {
         include '**/*.yml'
         filter ReplaceTokens, tokens: ["version": project.property("version")]
-        duplicatesStrategy DuplicatesStrategy.INCLUDE
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
 }

@@ -10,7 +10,7 @@ public record CatmullRomCurve(MolangExpression input,
 
     public CatmullRomCurve {
         if (nodes.size() < 4) {
-            throw new IllegalArgumentException("At least four nodes are required for Catmull-Rom spline");
+            throw new IllegalArgumentException("At least four nodes are required for Catmull-Rom curve");
         }
     }
 

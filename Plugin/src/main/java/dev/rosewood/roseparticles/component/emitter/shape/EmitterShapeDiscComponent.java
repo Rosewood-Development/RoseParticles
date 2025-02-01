@@ -2,6 +2,7 @@ package dev.rosewood.roseparticles.component.emitter.shape;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import dev.omega.arcane.ast.ConstantExpression;
 import dev.omega.arcane.ast.MolangExpression;
 import dev.omega.arcane.exception.MolangLexException;
 import dev.omega.arcane.exception.MolangParseException;
@@ -21,7 +22,12 @@ public record EmitterShapeDiscComponent(EmitterPlaneNormalType planeNormal,
     public static EmitterShapeDiscComponent parse(JsonElement jsonElement) throws MolangLexException, MolangParseException {
         JsonObject jsonObject = jsonElement.getAsJsonObject();
         EmitterPlaneNormalType planeNormal = EmitterPlaneNormalType.parse(jsonObject, "plane_normal", EmitterPlaneNormalType.CUSTOM);
-        MolangExpressionVector3 planeNormalCustom = MolangExpressionVector3.parsePlaneNormal(jsonObject, "plane_normal");
+        MolangExpressionVector3 planeNormalCustom = switch (planeNormal) {
+            case CUSTOM -> MolangExpressionVector3.parsePlaneNormal(jsonObject, "plane_normal");
+            case X -> new MolangExpressionVector3(new ConstantExpression(1), new ConstantExpression(0), new ConstantExpression(0));
+            case Y -> new MolangExpressionVector3(new ConstantExpression(0), new ConstantExpression(1), new ConstantExpression(0));
+            case Z -> new MolangExpressionVector3(new ConstantExpression(0), new ConstantExpression(0), new ConstantExpression(1));
+        };
         MolangExpressionVector3 offset = MolangExpressionVector3.parse(jsonObject, "offset");
         MolangExpression radius = JsonHelper.parseMolang(jsonObject, "radius", 1F);
         boolean surfaceOnly = JsonHelper.parseBoolean(jsonObject, "surface_only", false);

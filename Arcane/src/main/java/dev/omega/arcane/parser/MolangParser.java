@@ -270,7 +270,7 @@ public class MolangParser {
                     throw new MolangParseException("Expected to find reference . after '%s'!".formatted(string));
                 }
 
-                return switch (string) {
+                return switch (string.toLowerCase()) {
                     case "query", "q" -> reference(ReferenceType.QUERY);
                     case "variable", "v" -> reference(ReferenceType.VARIABLE);
                     case "temp", "t" -> reference(ReferenceType.TEMP);

@@ -47,5 +47,6 @@ public record GradientParticleColor(MolangExpression interpolantExpression,
 
         return new Color(r, g, b, a);
     }
+
 }
 

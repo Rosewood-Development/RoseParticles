@@ -6,7 +6,6 @@ plugins {
 
 allprojects {
     apply plugin: 'java-library'
-    apply plugin: 'com.gradleup.shadow'
     apply plugin: 'maven-publish'
 
     java {
@@ -36,8 +35,8 @@ allprojects {
             if (project.hasProperty('mavenUser') && project.hasProperty('mavenPassword')) {
                 maven {
                     credentials {
-                        username project.mavenUser
-                        password project.mavenPassword
+                        username = project.mavenUser
+                        password = project.mavenPassword
                     }
 
                     def releasesRepoUrl = 'https://repo.rosewooddev.io/repository/public-releases/'
@@ -54,6 +53,14 @@ group = 'dev.rosewood'
 dependencies {
     implementation project(':Plugin')
     implementation project(':Arcane')
+    implementation project(':NMS:Wrapper')
+    implementation project(path: ':NMS:v1_21_R3', configuration: 'reobf')
+}
+
+jar {
+    manifest {
+        attributes("paperweight-mappings-namespace": "spigot")
+    }
 }
 
 publishing {
