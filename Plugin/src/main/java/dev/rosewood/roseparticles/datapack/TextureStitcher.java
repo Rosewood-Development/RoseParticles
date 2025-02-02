@@ -101,8 +101,9 @@ public class TextureStitcher {
                             dimension = new Dimension(bufferedImage.getWidth(), bufferedImage.getHeight());
                             Path path = newTexturePath.toPath();
                             Files.copy(file.toPath(), path);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
+                        } catch (Exception e) {
+                            RoseParticles.getInstance().getLogger().warning("Failed to cut image texture, texture will be missing: " + fileName);
+                            e.printStackTrace();
                         }
                     } else {
                         try {
@@ -116,7 +117,7 @@ public class TextureStitcher {
                     textureId++;
                 }
 
-                this.textureSymbolMappings.put(identifier, new StitchedTexture(Vector2.empty(), new Vector2(dimension.width, dimension.height), dimension, fileNames, symbols));
+                this.textureSymbolMappings.put(identifier, new StitchedTexture(dimension, fileNames, symbols));
             } else {
                 File file = new File(fileFolder, textureName + ".png");
                 if (!file.exists()) {
@@ -124,36 +125,63 @@ public class TextureStitcher {
                     continue;
                 }
 
-                String newTextureName = "%s.png".formatted(textureId);
-                File newTexturePath = new File(packTexturesDirectory, newTextureName);
-
-                Dimension dimension;
-                Vector2 uvStart;
-                Vector2 uvSize;
                 try (FileInputStream inputStream = new FileInputStream(file)) {
                     BufferedImage bufferedImage = ImageIO.read(inputStream);
-                    dimension = new Dimension(bufferedImage.getWidth(), bufferedImage.getHeight());
+                    Dimension dimension = new Dimension(bufferedImage.getWidth(), bufferedImage.getHeight());
 
                     int textureWidth = uv.textureWidth();
                     int textureHeight = uv.textureHeight();
 
-                    if (textureWidth == 1 && textureHeight == 1) {
-                        uvStart = new Vector2(uv.uv().x() * dimension.width, uv.uv().y() * dimension.height);
-                        uvSize = new Vector2(uv.uvSize().x() * dimension.width, uv.uvSize().y() * dimension.height);
+                    Vector2 scalar = new Vector2((float) dimension.width / textureWidth, (float) dimension.height / textureHeight);
+
+                    var flipbook = uv.flipbook();
+                    if (flipbook == null) {
+                        Vector2 uvStart = uv.uv().multiply(scalar);
+                        Vector2 uvSize = uv.uvSize().multiply(scalar);
+                        BufferedImage texture = bufferedImage.getSubimage(Math.round(uvStart.x()), Math.round(uvStart.y()), Math.round(uvSize.x()), Math.round(uvSize.y()));
+                        dimension = new Dimension(texture.getWidth(), texture.getHeight());
+                        String newTextureName = "%s.png".formatted(textureId);
+                        File newTexturePath = new File(packTexturesDirectory, newTextureName);
+                        ImageIO.write(texture, "png", newTexturePath);
+                        this.textureSymbolMappings.put(identifier, new StitchedTexture(dimension, List.of(newTextureName), List.of((char) textureId)));
+                        textureId++;
                     } else {
-                        uvStart = uv.uv();
-                        uvSize = uv.uvSize();
+                        Vector2 baseUV = flipbook.baseUV().multiply(scalar);
+                        Vector2 sizeUV = flipbook.sizeUV().multiply(scalar);
+                        Vector2 stepUV = flipbook.stepUV().multiply(scalar);
+
+                        if (stepUV.x() == 0 && stepUV.y() == 0) {
+                            RoseParticles.getInstance().getLogger().warning(identifier + " step_UV is set to [0, 0] which would lead to an infinite loop and thus is invalid");
+                            continue;
+                        }
+
+                        List<String> fileNames = new ArrayList<>();
+                        List<Character> symbols = new ArrayList<>();
+
+                        // Cut textures until we go out of bounds
+                        int x = Math.round(baseUV.x());
+                        int y = Math.round(baseUV.y());
+
+                        while (x >= 0 && y >= 0 && x < dimension.width && y < dimension.height
+                                && x + sizeUV.x() >= 0 && y + sizeUV.y() >= 0 && x + sizeUV.x() <= dimension.width && y + sizeUV.y() <= dimension.height) {
+                            BufferedImage texture = bufferedImage.getSubimage(x, y, Math.round(sizeUV.x()), Math.round(sizeUV.y()));
+                            String newTextureName = "%s.png".formatted(textureId);
+                            File newTexturePath = new File(packTexturesDirectory, newTextureName);
+                            ImageIO.write(texture, "png", newTexturePath);
+                            fileNames.add(newTextureName);
+                            symbols.add((char) textureId);
+                            textureId++;
+                            x += Math.round(stepUV.x());
+                            y += Math.round(stepUV.y());
+                        }
+
+                        dimension = new Dimension(Math.round(sizeUV.x()), Math.round(sizeUV.y()));
+                        this.textureSymbolMappings.put(identifier, new StitchedTexture(dimension, fileNames, symbols));
                     }
-
-                    BufferedImage texture = bufferedImage.getSubimage(Math.round(uvStart.x()), Math.round(uvStart.y()), Math.round(uvSize.x()), Math.round(uvSize.y()));
-                    dimension = new Dimension(texture.getWidth(), texture.getHeight());
-                    ImageIO.write(texture, "png", newTexturePath);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+                } catch (Exception e) {
+                    RoseParticles.getInstance().getLogger().warning("Failed to cut image texture, texture will be missing: " + fileName);
+                    e.printStackTrace();
                 }
-
-                this.textureSymbolMappings.put(identifier, new StitchedTexture(uvStart, uvSize, dimension, List.of(newTextureName), List.of((char) textureId)));
-                textureId++;
             }
         }
     }

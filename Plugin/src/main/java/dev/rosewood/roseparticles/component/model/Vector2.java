@@ -7,6 +7,10 @@ import com.google.gson.JsonObject;
 public record Vector2(float x,
                       float y) {
 
+    public Vector2 multiply(Vector2 scalar) {
+        return new Vector2(this.x * scalar.x(), this.y * scalar.y());
+    }
+
     public static Vector2 parse(JsonObject jsonObject, String property) {
         JsonElement element = jsonObject.get(property);
         if (element == null || !element.isJsonArray())

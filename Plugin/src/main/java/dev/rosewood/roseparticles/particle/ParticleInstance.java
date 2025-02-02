@@ -175,7 +175,12 @@ public class ParticleInstance extends ParticleEffect {
         Vector2 scale = this.sizeExpression.evaluate();
         this.currentScale = new Vector3f(scale.x() * 10, scale.y() * 10, 0);
 
-        this.velocity = direction.multiply(speed);
+        if (speed.lengthSquared() == 0 || direction.lengthSquared() == 0) {
+            this.velocity = new Vector();
+        } else {
+            this.velocity = direction.normalize().multiply(speed);
+        }
+
         this.updateTextDisplay();
     }
 
