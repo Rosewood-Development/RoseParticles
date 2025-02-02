@@ -204,14 +204,14 @@ public class MolangParser {
     private MolangExpression term() throws MolangParseException {
         MolangExpression left = factor();
 
-        // +
-        while (match(PLUS)) {
-            left = new AdditionExpression(left, factor());
-        }
-
-        // -
-        while (match(MINUS)) {
-            left = new SubtractionExpression(left, factor());
+        while (true) {
+            if(match(PLUS)) { // +
+                left = new AdditionExpression(left, factor());
+            } else if(match(MINUS)) { // -
+                left = new SubtractionExpression(left, factor());
+            } else {
+                break;
+            }
         }
 
         return left;
@@ -220,14 +220,14 @@ public class MolangParser {
     private MolangExpression factor() throws MolangParseException {
         MolangExpression left = unary();
 
-        // *
-        while (match(STAR)) {
-            left = new MultiplicationExpression(left, unary());
-        }
-
-        // /
-        while (match(SLASH)) {
-            left = new DivisionExpression(left, unary());
+        while (true) {
+            if(match(STAR)) { // *
+                left = new MultiplicationExpression(left, unary());
+            } else if(match(SLASH)) { // /
+                left = new DivisionExpression(left, unary());
+            } else {
+                break;
+            }
         }
 
         return left;
@@ -274,7 +274,7 @@ public class MolangParser {
                     case "query", "q" -> reference(ReferenceType.QUERY);
                     case "variable", "v" -> reference(ReferenceType.VARIABLE);
                     case "temp", "t" -> reference(ReferenceType.TEMP);
-                    case "math", "m" -> math();
+                    case "math", "mth", "m" -> math();
                     default -> throw new IllegalStateException("Unexpected value: " + string);
                 };
             }

@@ -20,4 +20,5 @@ public class UnaryArithmeticTests {
     public void Subtraction_Double_Success() {
         Assertions.assertEquals(-5.0, Molang.evaluateUnchecked("5.0 - 10.0"));
     }
+
 }

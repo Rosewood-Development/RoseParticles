@@ -58,4 +58,5 @@ public class ParserTests {
     public void Parse_NestedBinaryDivision_ReturnsBinaryExpression() throws MolangLexException, MolangParseException {
         Assertions.assertInstanceOf(DivisionExpression.class, MolangParser.parse("5 / 5 / 5", MolangParser.FLAG_NONE));
     }
+
 }

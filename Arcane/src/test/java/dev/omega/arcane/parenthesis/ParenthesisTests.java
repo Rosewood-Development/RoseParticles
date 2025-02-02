@@ -35,4 +35,5 @@ public class ParenthesisTests {
         // (1 + 1) * 3 * (1 + 1) = 2 * 3 * 2 = 12
         Assertions.assertEquals(4.0f, Molang.evaluateUnchecked("3 * 1 + 1"));
     }
+
 }
