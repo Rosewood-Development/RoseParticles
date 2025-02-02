@@ -1,9 +1,10 @@
 package dev.rosewood.roseparticles.nms.hologram;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import org.bukkit.entity.Player;
 
@@ -15,7 +16,7 @@ public abstract class Hologram {
 
     public Hologram(int entityId, Consumer<Hologram> init) {
         this.entityId = entityId;
-        this.watchers = new HashSet<>();
+        this.watchers = Collections.newSetFromMap(new ConcurrentHashMap<>());
         this.properties = new HologramProperties();
 
         init.accept(this);

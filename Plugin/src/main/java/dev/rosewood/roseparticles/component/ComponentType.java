@@ -57,7 +57,7 @@ public final class ComponentType<T> {
     /** [ ] */ public static final ComponentType<ParticleInitializationComponent> PARTICLE_INITIALIZATION = create("minecraft:partial_initialization", ParticleInitializationComponent::parse);
     /** [X] */ public static final ComponentType<ParticleMotionDynamicComponent> PARTICLE_MOTION_DYNAMIC = create("minecraft:particle_motion_dynamic", ParticleMotionDynamicComponent::parse);
     /** [ ] */ public static final ComponentType<ParticleMotionParametricComponent> PARTICLE_MOTION_PARAMETRIC = create("minecraft:particle_motion_parametric", ParticleMotionParametricComponent::parse);
-    /** [ ] */ public static final ComponentType<ParticleMotionCollisionComponent> PARTICLE_MOTION_COLLISION = create("minecraft:particle_motion_collision", ParticleMotionCollisionComponent::parse);
+    /** [X] */ public static final ComponentType<ParticleMotionCollisionComponent> PARTICLE_MOTION_COLLISION = create("minecraft:particle_motion_collision", ParticleMotionCollisionComponent::parse);
     /** [ ] */ public static final ComponentType<ParticleAppearanceBillboardComponent> PARTICLE_APPEARANCE_BILLBOARD = create("minecraft:particle_appearance_billboard", ParticleAppearanceBillboardComponent::parse);
     /** [X] */ public static final ComponentType<ParticleAppearanceTintingComponent> PARTICLE_APPEARANCE_TINTING = create("minecraft:particle_appearance_tinting", ParticleAppearanceTintingComponent::parse);
     /** [X] */ public static final ComponentType<ParticleAppearanceLightingComponent> PARTICLE_APPEARANCE_LIGHTING = create("minecraft:particle_appearance_lighting", ParticleAppearanceLightingComponent::parse);
