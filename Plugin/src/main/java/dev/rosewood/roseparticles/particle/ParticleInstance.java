@@ -188,15 +188,15 @@ public class ParticleInstance extends ParticleEffect {
         for (var curveEntry : this.curves.entrySet())
             this.set(curveEntry.getKey(), curveEntry.getValue().evaluate());
 
-        Vector acceleration;
-        float drag, rotationAcceleration, rotationDrag;
         if (this.accelerationExpression != null) {
-            acceleration = this.accelerationExpression.evaluate();
-            drag = this.dragExpression.evaluate();
-            rotationAcceleration = this.rotationAccelerationExpression.evaluate();
-            rotationDrag = this.rotationDragExpression.evaluate();
-
+            Vector acceleration = this.accelerationExpression.evaluate();
+            float drag = this.dragExpression.evaluate();
             this.velocity.add(acceleration.add(this.velocity.clone().multiply(-drag)).multiply(deltaTime));
+        }
+
+        if (this.rotationAccelerationExpression != null) {
+            float rotationAcceleration = this.rotationAccelerationExpression.evaluate();
+            float rotationDrag = this.rotationDragExpression.evaluate();
             this.rotationRate += (rotationAcceleration + this.rotationRate * -rotationDrag) * deltaTime;
         }
 
@@ -229,6 +229,7 @@ public class ParticleInstance extends ParticleEffect {
         Vector3f nextScaleVec3f = new Vector3f(nextScale.x() * 10, nextScale.y() * 10, 0);
         if (!nextScaleVec3f.equals(this.currentScale) || this.rotation != nextRotation) {
             this.currentScale = nextScaleVec3f;
+            this.rotation = nextRotation;
             Transformation transformation = new Transformation(new Vector3f(), new Quaternionf(), new Vector3f(), new Quaternionf());
             transformation.getScale().set(this.currentScale);
             transformation.getRightRotation().rotateZ(this.rotation);

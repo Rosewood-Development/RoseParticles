@@ -8,6 +8,7 @@ import dev.rosewood.roseparticles.particle.curve.Curve;
 import dev.rosewood.roseparticles.particle.emitter.DiscEmitter;
 import dev.rosewood.roseparticles.particle.emitter.Emitter;
 import dev.rosewood.roseparticles.particle.emitter.PointEmitter;
+import dev.rosewood.roseparticles.particle.emitter.SphereEmitter;
 import dev.rosewood.roseparticles.util.ParticleUtils;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,13 +62,18 @@ public class EmitterInstance extends ParticleEffect {
             this.lifetimeController = new EmitterLifetimeController(this.particleSystem);
         }
 
-        Emitter emitter = null;
+        Emitter emitter;
         var pointEmitterComponent = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_POINT);
         var discEmitterComponent = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_DISC);
+        var sphereEmitterComponent = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_SPHERE);
         if (pointEmitterComponent != null) {
             emitter = new PointEmitter(particleSystem, pointEmitterComponent);
         } else if (discEmitterComponent != null) {
             emitter = new DiscEmitter(particleSystem, discEmitterComponent);
+        } else if (sphereEmitterComponent != null) {
+            emitter = new SphereEmitter(particleSystem, sphereEmitterComponent);
+        } else {
+            throw new IllegalArgumentException("No emitter component");
         }
 
         var rateSteadyComponent = particleSystem.getComponent(ComponentType.EMITTER_RATE_STEADY);

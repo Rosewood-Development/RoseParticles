@@ -104,9 +104,10 @@ public class EmitterLifetimeController {
 
             if (this.sleeping) {
                 this.sleeping = false;
-                emitter.set("age", age - emitter.get("lifetime"));
+                emitter.set("age", 0);
                 emitter.set("lifetime", this.activeTimeExpression.evaluate());
                 this.sleepDuration = this.sleepTimeExpression.evaluate();
+                return true;
             } else if (this.sleepDuration > 0) {
                 this.sleeping = true;
                 emitter.set("age", age - emitter.get("lifetime"));

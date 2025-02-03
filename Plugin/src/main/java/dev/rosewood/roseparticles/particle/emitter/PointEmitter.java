@@ -11,13 +11,13 @@ import org.bukkit.util.Vector;
 public class PointEmitter implements Emitter {
 
     private final ParticleSystem particleSystem;
-    private final MolangExpressionVector3 offsetExpression;
-    private final MolangExpressionVector3 directionExpression;
+    private final MolangExpressionVector3 offset;
+    private final MolangExpressionVector3 direction;
 
     public PointEmitter(ParticleSystem particleSystem, EmitterShapePointComponent component) {
         this.particleSystem = particleSystem;
-        this.offsetExpression = component.offset();
-        this.directionExpression = component.direction();
+        this.offset = component.offset();
+        this.direction = component.direction();
     }
 
     @Override
@@ -25,8 +25,8 @@ public class PointEmitter implements Emitter {
         ExpressionBindingContext context = this.particleSystem.getMolangContext();
         EmitterInstance emitterInstance = this.particleSystem.getEmitter();
         ParticleInstance particleInstance = new ParticleInstance(this.particleSystem);
-        Vector offset = this.offsetExpression.bind(context, particleInstance, emitterInstance).evaluate();
-        Vector direction = this.directionExpression.bind(context, particleInstance, emitterInstance).evaluate();
+        Vector offset = this.offset.bind(context, particleInstance, emitterInstance).evaluate();
+        Vector direction = this.direction.bind(context, particleInstance, emitterInstance).evaluate();
         particleInstance.init(offset, direction);
         return particleInstance;
     }
