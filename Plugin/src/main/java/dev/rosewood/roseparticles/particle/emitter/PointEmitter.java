@@ -1,6 +1,7 @@
 package dev.rosewood.roseparticles.particle.emitter;
 
 import dev.omega.arcane.reference.ExpressionBindingContext;
+import dev.rosewood.roseparticles.component.emitter.shape.EmitterShapeCustomComponent;
 import dev.rosewood.roseparticles.component.emitter.shape.EmitterShapePointComponent;
 import dev.rosewood.roseparticles.component.model.MolangExpressionVector3;
 import dev.rosewood.roseparticles.particle.EmitterInstance;
@@ -15,6 +16,12 @@ public class PointEmitter implements Emitter {
     private final MolangExpressionVector3 direction;
 
     public PointEmitter(ParticleSystem particleSystem, EmitterShapePointComponent component) {
+        this.particleSystem = particleSystem;
+        this.offset = component.offset();
+        this.direction = component.direction();
+    }
+
+    public PointEmitter(ParticleSystem particleSystem, EmitterShapeCustomComponent component) {
         this.particleSystem = particleSystem;
         this.offset = component.offset();
         this.direction = component.direction();

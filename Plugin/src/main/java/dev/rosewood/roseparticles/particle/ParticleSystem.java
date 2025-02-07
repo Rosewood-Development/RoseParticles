@@ -43,6 +43,7 @@ public class ParticleSystem {
 
     public ParticleSystem(HologramManager hologramManager, Location origin, ParticleFile particleFile, StitchedTexture texture) {
         this(hologramManager, null, origin, particleFile, texture);
+
     }
 
     private ParticleSystem(HologramManager hologramManager, Entity entity, Location origin, ParticleFile particleFile, StitchedTexture texture) {
@@ -150,6 +151,10 @@ public class ParticleSystem {
     @Nullable
     public <T> T getComponent(ComponentType<T> componentType) {
         return this.particleFile.getComponent(componentType);
+    }
+
+    public Entity getAttachedTo() {
+        return this.attachedTo;
     }
 
     public Location getOrigin() {

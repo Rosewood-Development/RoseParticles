@@ -5,8 +5,10 @@ import dev.omega.arcane.reference.ExpressionBindingContext;
 import dev.rosewood.roseparticles.component.ComponentType;
 import dev.rosewood.roseparticles.particle.controller.EmitterLifetimeController;
 import dev.rosewood.roseparticles.particle.curve.Curve;
+import dev.rosewood.roseparticles.particle.emitter.BoxEmitter;
 import dev.rosewood.roseparticles.particle.emitter.DiscEmitter;
 import dev.rosewood.roseparticles.particle.emitter.Emitter;
+import dev.rosewood.roseparticles.particle.emitter.EntityAABBEmitter;
 import dev.rosewood.roseparticles.particle.emitter.PointEmitter;
 import dev.rosewood.roseparticles.particle.emitter.SphereEmitter;
 import dev.rosewood.roseparticles.util.ParticleUtils;
@@ -64,14 +66,23 @@ public class EmitterInstance extends ParticleEffect {
 
         Emitter emitter;
         var pointEmitterComponent = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_POINT);
+        var customEmitterComponent = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_CUSTOM);
         var discEmitterComponent = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_DISC);
         var sphereEmitterComponent = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_SPHERE);
+        var boxEmitterComponent = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_BOX);
+        var entityAABBEmitterComponent = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_ENTITY_AABB);
         if (pointEmitterComponent != null) {
             emitter = new PointEmitter(particleSystem, pointEmitterComponent);
+        } else if (customEmitterComponent != null) {
+            emitter = new PointEmitter(particleSystem, customEmitterComponent);
         } else if (discEmitterComponent != null) {
             emitter = new DiscEmitter(particleSystem, discEmitterComponent);
         } else if (sphereEmitterComponent != null) {
             emitter = new SphereEmitter(particleSystem, sphereEmitterComponent);
+        } else if (boxEmitterComponent != null) {
+            emitter = new BoxEmitter(particleSystem, boxEmitterComponent);
+        } else if (entityAABBEmitterComponent != null) {
+            emitter = new EntityAABBEmitter(particleSystem, entityAABBEmitterComponent);
         } else {
             throw new IllegalArgumentException("No emitter component");
         }

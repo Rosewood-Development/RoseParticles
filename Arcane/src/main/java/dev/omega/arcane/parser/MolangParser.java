@@ -285,7 +285,7 @@ public class MolangParser {
 
     private MolangExpression math() throws MolangParseException {
         if(match(IDENTIFIER)) {
-            String function = previous().lexeme();
+            String function = previous().lexeme().toLowerCase();
 
             // only math.pi doesn't have a method call
             if(!function.equals("pi")) {

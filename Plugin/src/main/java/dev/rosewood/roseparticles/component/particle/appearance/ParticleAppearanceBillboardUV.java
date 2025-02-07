@@ -23,7 +23,7 @@ public record ParticleAppearanceBillboardUV(int textureWidth,
         JsonElement flipbookElement = jsonObject.get("flipbook");
         if (flipbookElement != null && flipbookElement.isJsonObject()) {
             JsonObject flipbookObject = flipbookElement.getAsJsonObject();
-            flipbook = ParticleAppearanceBillboardUVFlipbook.parse(flipbookObject);
+            flipbook = ParticleAppearanceBillboardUVFlipbook.parse(jsonObject);
         }
 
         return  new ParticleAppearanceBillboardUV(textureWidth, textureHeight, uv, uvSize, flipbook);

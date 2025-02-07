@@ -51,6 +51,9 @@ public class ParticleManager extends Manager implements Listener {
         File[] files = particlesFolder.listFiles();
         if (files != null) {
             for (File file : files) {
+                if (!file.isFile())
+                    continue;
+
                 ParticleFile particleFile = ParticleFile.parse(file);
                 if (particleFile != null) {
                     String name = file.getName();

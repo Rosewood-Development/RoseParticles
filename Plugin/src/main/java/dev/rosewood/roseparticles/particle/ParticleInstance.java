@@ -57,6 +57,7 @@ public class ParticleInstance extends ParticleEffect {
     private final float coefficientOfRestitution;
     private final float collisionRadius;
     private final boolean expireOnContact;
+    private final MolangExpression perRenderExpression;
 
     private Vector position;
     private Vector velocity;
@@ -152,6 +153,13 @@ public class ParticleInstance extends ParticleEffect {
             this.collisionRadius = 0;
             this.expireOnContact = false;
         }
+
+        var particleInitialization = particleSystem.getComponent(ComponentType.PARTICLE_INITIALIZATION);
+        if (particleInitialization != null) {
+            this.perRenderExpression = particleInitialization.perRenderExpression().bind(context, this, this.particleSystem.getEmitter());
+        } else {
+            this.perRenderExpression = null;
+        }
     }
 
     /**
@@ -187,6 +195,9 @@ public class ParticleInstance extends ParticleEffect {
     public void update(float deltaTime) {
         for (var curveEntry : this.curves.entrySet())
             this.set(curveEntry.getKey(), curveEntry.getValue().evaluate());
+
+        if (this.perRenderExpression != null)
+            this.perRenderExpression.evaluate();
 
         if (this.accelerationExpression != null) {
             Vector acceleration = this.accelerationExpression.evaluate();
