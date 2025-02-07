@@ -37,7 +37,7 @@ public final class ComponentType<T> {
 
     private static final Map<String, ComponentType<?>> REGISTRY = new HashMap<>();
 
-    /** [ ] */ public static final ComponentType<EmitterLocalSpaceComponent> EMITTER_LOCAL_SPACE = create("minecraft:emitter_local_space", EmitterLocalSpaceComponent::parse);
+    /** [X] */ public static final ComponentType<EmitterLocalSpaceComponent> EMITTER_LOCAL_SPACE = create("minecraft:emitter_local_space", EmitterLocalSpaceComponent::parse);
     /** [X] */ public static final ComponentType<EmitterInitializationComponent> EMITTER_INITIALIZATION = create("minecraft:emitter_initialization", EmitterInitializationComponent::parse);
     /** [X] */ public static final ComponentType<EmitterRateInstantComponent> EMITTER_RATE_INSTANT = create("minecraft:emitter_rate_instant", EmitterRateInstantComponent::parse);
     /** [X] */ public static final ComponentType<EmitterRateSteadyComponent> EMITTER_RATE_STEADY = create("minecraft:emitter_rate_steady", EmitterRateSteadyComponent::parse);

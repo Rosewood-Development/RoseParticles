@@ -14,24 +14,15 @@ public class EntityAABBEmitter extends BaseBoxEmitter {
     }
 
     @Override
-    public Vector getOffset(ParticleInstance particleInstance) {
+    protected BoxParameters getParameters(ParticleInstance particleInstance) {
         Entity entity = this.particleSystem.getAttachedTo();
         if (entity != null) {
             BoundingBox boundingBox = entity.getBoundingBox();
-            return boundingBox.getCenter().subtract(entity.getLocation().toVector());
+            Vector offset = boundingBox.getCenter().subtract(entity.getLocation().toVector());
+            Vector halfDimensions = new Vector(boundingBox.getWidthX() / 2, boundingBox.getHeight() / 2, boundingBox.getWidthZ() / 2);
+            return new BoxParameters(offset, halfDimensions);
         } else {
-            return new Vector();
-        }
-    }
-
-    @Override
-    public Vector getHalfDimensions(ParticleInstance particleInstance) {
-        Entity entity = this.particleSystem.getAttachedTo();
-        if (entity != null) {
-            BoundingBox boundingBox = entity.getBoundingBox();
-            return new Vector(boundingBox.getWidthX() / 2, boundingBox.getHeight() / 2, boundingBox.getWidthZ() / 2);
-        } else {
-            return new Vector(0.5, 0.5, 0.50);
+            return new BoxParameters(new Vector(), new Vector(0.5, 0.5, 0.5));
         }
     }
 

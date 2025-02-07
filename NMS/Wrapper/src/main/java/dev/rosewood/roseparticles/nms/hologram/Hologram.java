@@ -6,15 +6,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 public abstract class Hologram {
 
+    private final World world;
     protected final int entityId;
     protected final Set<Player> watchers;
     protected final HologramProperties properties;
 
-    public Hologram(int entityId, Consumer<Hologram> init) {
+    public Hologram(World world, int entityId, Consumer<Hologram> init) {
+        this.world = world;
         this.entityId = entityId;
         this.watchers = Collections.newSetFromMap(new ConcurrentHashMap<>());
         this.properties = new HologramProperties();
@@ -44,6 +47,13 @@ public abstract class Hologram {
     public void removeWatcher(Player player) {
         if (this.watchers.remove(player))
             this.delete(player);
+    }
+
+    /**
+     * @return the world this Hologram is visible in
+     */
+    public World getWorld() {
+        return this.world;
     }
 
     /**

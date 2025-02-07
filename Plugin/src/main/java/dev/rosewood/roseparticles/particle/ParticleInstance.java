@@ -30,8 +30,8 @@ import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.chat.ComponentSerializer;
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.entity.Display;
+import org.bukkit.entity.Entity;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
 import org.joml.Quaternionf;
@@ -58,6 +58,9 @@ public class ParticleInstance extends ParticleEffect {
     private final float collisionRadius;
     private final boolean expireOnContact;
     private final MolangExpression perRenderExpression;
+    private final boolean localPosition;
+    private final boolean localRotation;
+    private final boolean localVelocity;
 
     private Vector position;
     private Vector velocity;
@@ -83,11 +86,11 @@ public class ParticleInstance extends ParticleEffect {
         for (int i = 1; i <= 4; i++)
             this.set("random_" + i, ParticleUtils.RANDOM.nextFloat());
 
-        var lifetimeComponent = particleSystem.getComponent(ComponentType.PARTICLE_LIFETIME_EXPRESSION);
-        if (lifetimeComponent != null) {
-            this.expirationExpression = lifetimeComponent.expirationExpression().bind(context, this, this.particleSystem.getEmitter());
+        var lifetimeExpression = particleSystem.getComponent(ComponentType.PARTICLE_LIFETIME_EXPRESSION);
+        if (lifetimeExpression != null) {
+            this.expirationExpression = lifetimeExpression.expirationExpression().bind(context, this, this.particleSystem.getEmitter());
 
-            MolangExpression maxLifetimeExpression = lifetimeComponent.maxLifetime().bind(context, this, this.particleSystem.getEmitter());
+            MolangExpression maxLifetimeExpression = lifetimeExpression.maxLifetime().bind(context, this, this.particleSystem.getEmitter());
             float lifetime = maxLifetimeExpression.evaluate();
             this.set("lifetime", lifetime);
         } else {
@@ -160,6 +163,17 @@ public class ParticleInstance extends ParticleEffect {
         } else {
             this.perRenderExpression = null;
         }
+
+        var localSpace = particleSystem.getComponent(ComponentType.EMITTER_LOCAL_SPACE);
+        if (localSpace != null) {
+            this.localPosition = localSpace.position();
+            this.localRotation = this.localPosition && localSpace.rotation();
+            this.localVelocity = localSpace.velocity();
+        } else {
+            this.localPosition = false;
+            this.localRotation = false;
+            this.localVelocity = false;
+        }
     }
 
     /**
@@ -171,6 +185,9 @@ public class ParticleInstance extends ParticleEffect {
      */
     public void init(Vector position, Vector direction) {
         this.position = position;
+
+        if (!this.localPosition)
+            this.position.add(this.particleSystem.getOrigin().toVector());
 
         var initialSpeedComponent = this.particleSystem.getComponent(ComponentType.PARTICLE_INITIAL_SPEED);
         Vector speed;
@@ -187,6 +204,16 @@ public class ParticleInstance extends ParticleEffect {
             this.velocity = new Vector();
         } else {
             this.velocity = direction.normalize().multiply(speed);
+        }
+
+        if (this.localVelocity) {
+            Entity attachedTo = this.particleSystem.getAttachedTo();
+            if (attachedTo != null) {
+                Vector velocity = attachedTo.getVelocity();
+                if (attachedTo.isOnGround())
+                    velocity.setY(0);
+                this.velocity.add(velocity);
+            }
         }
 
         this.updateTextDisplay();
@@ -243,23 +270,34 @@ public class ParticleInstance extends ParticleEffect {
             this.rotation = nextRotation;
             Transformation transformation = new Transformation(new Vector3f(), new Quaternionf(), new Vector3f(), new Quaternionf());
             transformation.getScale().set(this.currentScale);
-            transformation.getRightRotation().rotateZ(this.rotation);
+            transformation.getRightRotation().rotateZ((float) Math.toRadians(this.rotation));
             this.hologram.getProperties().set(HologramProperty.TRANSFORMATION, transformation);
         }
 
         if (updateDisplay)
             this.updateTextDisplay();
 
-        Location origin = this.particleSystem.getOrigin();
-        Location location = origin.add(this.position);
-        this.hologram.getProperties().set(HologramProperty.LOCATION, location);
+        Vector location = this.getEffectivePosition();
+        this.hologram.getProperties().set(HologramProperty.POSITION, location);
 
         this.hologram.update();
     }
 
+    private Vector getEffectivePosition() {
+        Location origin = this.particleSystem.getOrigin();
+        Vector location = this.position.clone();
+
+        if (this.localRotation)
+            location.rotateAroundY(-Math.toRadians(origin.getYaw()));
+
+        if (this.localPosition)
+            location.add(origin.toVector());
+
+        return location;
+    }
+
     private void collide(float deltaTime, int depth) {
         Location origin = this.particleSystem.getOrigin();
-        World world = origin.getWorld();
         if (this.worldCollision != null) {
             Location startLocation = origin.clone().add(this.position);
             RayTracer.RayTraceOutput hit = RayTracer.rayTrace(
@@ -330,12 +368,11 @@ public class ParticleInstance extends ParticleEffect {
     }
 
     private void updateTextDisplay() {
-        Location location = this.particleSystem.getOrigin().add(this.position);
-
+        Vector location = this.getEffectivePosition();
         if (this.hologram == null) {
             this.hologram = this.particleSystem.createHologram(hologram -> {
                 HologramProperties properties = hologram.getProperties();
-                properties.set(HologramProperty.LOCATION, location);
+                properties.set(HologramProperty.POSITION, location);
                 if (!this.worldLighting)
                     properties.set(HologramProperty.BRIGHTNESS, new Display.Brightness(15, 15));
                 properties.set(HologramProperty.BILLBOARD, this.displayBillboard);
@@ -348,10 +385,11 @@ public class ParticleInstance extends ParticleEffect {
                 if (this.color != null)
                     this.currentColor = this.color.get();
 
-                if (this.currentScale != null) {
+                if (this.currentScale != null || this.rotation != 0) {
                     Transformation transformation = new Transformation(new Vector3f(), new Quaternionf(), new Vector3f(), new Quaternionf());
-                    transformation.getScale().set(this.currentScale);
-                    transformation.getRightRotation().rotateZ(this.rotation);
+                    if (this.currentScale != null)
+                        transformation.getScale().set(this.currentScale);
+                    transformation.getRightRotation().rotateZ((float) Math.toRadians(this.rotation));
                     hologram.getProperties().set(HologramProperty.TRANSFORMATION, transformation);
                 }
 

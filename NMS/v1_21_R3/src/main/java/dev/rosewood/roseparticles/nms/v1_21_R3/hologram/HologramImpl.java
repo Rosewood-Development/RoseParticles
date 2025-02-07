@@ -28,12 +28,13 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PositionMoveRotation;
 import net.minecraft.world.phys.Vec3;
 import org.bukkit.Color;
-import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.craftbukkit.util.CraftChatMessage;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Transformation;
+import org.bukkit.util.Vector;
 
 public class HologramImpl extends Hologram {
 
@@ -46,13 +47,13 @@ public class HologramImpl extends Hologram {
                 }
             });
 
-    public HologramImpl(int entityId, Consumer<Hologram> init) {
-        super(entityId, init);
+    public HologramImpl(World world, int entityId, Consumer<Hologram> init) {
+        super(world, entityId, init);
     }
 
     @Override
     protected void create(Player player) {
-        Location location = this.properties.get(HologramProperty.LOCATION);
+        Vector location = this.properties.get(HologramProperty.POSITION);
 
         ClientboundAddEntityPacket packet = new ClientboundAddEntityPacket(
                 this.entityId,
@@ -161,12 +162,12 @@ public class HologramImpl extends Hologram {
         if (!dataValues.isEmpty())
             packets.add(new ClientboundSetEntityDataPacket(this.entityId, dataValues));
 
-        if (includeLocation && propertiesSet.contains(HologramProperty.LOCATION)) {
-            Location previous = this.properties.getPreviousLocation();
-            Location current = this.properties.get(HologramProperty.LOCATION);
+        if (includeLocation && propertiesSet.contains(HologramProperty.POSITION)) {
+            Vector previous = this.properties.getPreviousLocation();
+            Vector current = this.properties.get(HologramProperty.POSITION);
             if (Math.abs(previous.distanceSquared(current)) > 7.5) {
                 Vec3 position = new Vec3(current.getX(), current.getY(), current.getZ());
-                packets.add(new ClientboundTeleportEntityPacket(this.entityId, new PositionMoveRotation(position, Vec3.ZERO, current.getYaw(), current.getPitch()), Set.of(), false));
+                packets.add(new ClientboundTeleportEntityPacket(this.entityId, new PositionMoveRotation(position, Vec3.ZERO, 0, 0), Set.of(), false));
             } else {
                 short deltaX = (short) (Math.round(current.getX() * 4096) - Math.round(previous.getX() * 4096));
                 short deltaY = (short) (Math.round(current.getY() * 4096) - Math.round(previous.getY() * 4096));

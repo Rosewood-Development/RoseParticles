@@ -14,12 +14,13 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.util.Vector;
 
 public class HologramManager extends Manager implements Listener {
 
@@ -55,22 +56,29 @@ public class HologramManager extends Manager implements Listener {
 
     private void updateWatchers() {
         Collection<? extends Player> players = Bukkit.getOnlinePlayers();
-        for (Player player : players)
+        for (Player player : players) {
+            World world = player.getWorld();
+            Vector position = player.getLocation().toVector();
             for (Hologram hologram : this.holograms)
-                this.updateWatcher(player, hologram);
+                this.updateWatcher(player, world, position, hologram);
+        }
     }
 
     private void updateWatcher(Player player, Hologram hologram) {
-        if (this.isPlayerInRange(player, hologram)) {
+        this.updateWatcher(player, player.getWorld(), player.getLocation().toVector(), hologram);
+    }
+
+    private void updateWatcher(Player player, World world, Vector position, Hologram hologram) {
+        if (this.isPlayerInRange(world, position, hologram)) {
             hologram.addWatcher(player);
         } else {
             hologram.removeWatcher(player);
         }
     }
 
-    private boolean isPlayerInRange(Player player, Hologram hologram) {
-        Location location = hologram.getProperties().get(HologramProperty.LOCATION);
-        return player.getWorld().equals(location.getWorld()) && player.getLocation().distanceSquared(location) <= this.renderDistanceSqrd;
+    private boolean isPlayerInRange(World world, Vector position, Hologram hologram) {
+        Vector location = hologram.getProperties().get(HologramProperty.POSITION);
+        return world.equals(hologram.getWorld()) && position.distanceSquared(location) <= this.renderDistanceSqrd;
     }
 
     @EventHandler
@@ -94,10 +102,11 @@ public class HologramManager extends Manager implements Listener {
     /**
      * Creates a hologram with an initialization consumer
      *
+     * @param world The world the hologram belongs to
      * @param init The consumer to call right before the hologram finishes initializing
      */
-    public Hologram createHologram(Consumer<Hologram> init) {
-        Hologram hologram = this.nmsHandler.createHologram(init);
+    public Hologram createHologram(World world, Consumer<Hologram> init) {
+        Hologram hologram = this.nmsHandler.createHologram(world, init);
         this.holograms.add(hologram);
         for (Player player : Bukkit.getOnlinePlayers())
             this.updateWatcher(player, hologram);

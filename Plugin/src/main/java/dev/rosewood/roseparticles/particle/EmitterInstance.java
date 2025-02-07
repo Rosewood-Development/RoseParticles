@@ -28,6 +28,7 @@ public class EmitterInstance extends ParticleEffect {
 
     private final Emitter emitter;
     private final EmitterLifetimeController lifetimeController;
+    
     private boolean emitOnce;
     private int instantEmitAmount;
     private boolean emitted;
@@ -43,66 +44,63 @@ public class EmitterInstance extends ParticleEffect {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         this.set("age", 0);
 
-        var initializationComponent = particleSystem.getComponent(ComponentType.EMITTER_INITIALIZATION);
-        if (initializationComponent != null) {
-            initializationComponent.creationExpression().bind(context, this).evaluate();
-            this.perUpdateExpression = initializationComponent.perUpdateExpression().bind(context, this);
+        var initialization = particleSystem.getComponent(ComponentType.EMITTER_INITIALIZATION);
+        if (initialization != null) {
+            initialization.creationExpression().bind(context, this).evaluate();
+            this.perUpdateExpression = initialization.perUpdateExpression().bind(context, this);
         } else {
             this.perUpdateExpression = null;
         }
 
-        var lifetimeOnceComponent = particleSystem.getComponent(ComponentType.EMITTER_LIFETIME_ONCE);
-        var lifetimeLoopingComponent = particleSystem.getComponent(ComponentType.EMITTER_LIFETIME_LOOPING);
-        var lifetimeExpressionComponent = particleSystem.getComponent(ComponentType.EMITTER_LIFETIME_EXPRESSION);
-        if (lifetimeOnceComponent != null) {
-            this.lifetimeController = new EmitterLifetimeController(this.particleSystem, this, lifetimeOnceComponent);
-        } else if (lifetimeLoopingComponent != null) {
-            this.lifetimeController = new EmitterLifetimeController(this.particleSystem, this, lifetimeLoopingComponent);
-        } else if (lifetimeExpressionComponent != null) {
-            this.lifetimeController = new EmitterLifetimeController(this.particleSystem, this, lifetimeExpressionComponent);
+        var lifetimeOnce = particleSystem.getComponent(ComponentType.EMITTER_LIFETIME_ONCE);
+        var lifetimeLooping = particleSystem.getComponent(ComponentType.EMITTER_LIFETIME_LOOPING);
+        var lifetimeExpression = particleSystem.getComponent(ComponentType.EMITTER_LIFETIME_EXPRESSION);
+        if (lifetimeOnce != null) {
+            this.lifetimeController = new EmitterLifetimeController(this.particleSystem, this, lifetimeOnce);
+        } else if (lifetimeLooping != null) {
+            this.lifetimeController = new EmitterLifetimeController(this.particleSystem, this, lifetimeLooping);
+        } else if (lifetimeExpression != null) {
+            this.lifetimeController = new EmitterLifetimeController(this.particleSystem, this, lifetimeExpression);
         } else {
             this.lifetimeController = new EmitterLifetimeController(this.particleSystem);
         }
 
-        Emitter emitter;
-        var pointEmitterComponent = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_POINT);
-        var customEmitterComponent = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_CUSTOM);
-        var discEmitterComponent = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_DISC);
-        var sphereEmitterComponent = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_SPHERE);
-        var boxEmitterComponent = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_BOX);
-        var entityAABBEmitterComponent = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_ENTITY_AABB);
-        if (pointEmitterComponent != null) {
-            emitter = new PointEmitter(particleSystem, pointEmitterComponent);
-        } else if (customEmitterComponent != null) {
-            emitter = new PointEmitter(particleSystem, customEmitterComponent);
-        } else if (discEmitterComponent != null) {
-            emitter = new DiscEmitter(particleSystem, discEmitterComponent);
-        } else if (sphereEmitterComponent != null) {
-            emitter = new SphereEmitter(particleSystem, sphereEmitterComponent);
-        } else if (boxEmitterComponent != null) {
-            emitter = new BoxEmitter(particleSystem, boxEmitterComponent);
-        } else if (entityAABBEmitterComponent != null) {
-            emitter = new EntityAABBEmitter(particleSystem, entityAABBEmitterComponent);
+        var pointEmitter = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_POINT);
+        var customEmitter = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_CUSTOM);
+        var discEmitter = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_DISC);
+        var sphereEmitter = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_SPHERE);
+        var boxEmitter = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_BOX);
+        var entityAABBEmitter = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_ENTITY_AABB);
+        if (pointEmitter != null) {
+            this.emitter = new PointEmitter(particleSystem, pointEmitter);
+        } else if (customEmitter != null) {
+            this.emitter = new PointEmitter(particleSystem, customEmitter);
+        } else if (discEmitter != null) {
+            this.emitter = new DiscEmitter(particleSystem, discEmitter);
+        } else if (sphereEmitter != null) {
+            this.emitter = new SphereEmitter(particleSystem, sphereEmitter);
+        } else if (boxEmitter != null) {
+            this.emitter = new BoxEmitter(particleSystem, boxEmitter);
+        } else if (entityAABBEmitter != null) {
+            this.emitter = new EntityAABBEmitter(particleSystem, entityAABBEmitter);
         } else {
             throw new IllegalArgumentException("No emitter component");
         }
 
-        var rateSteadyComponent = particleSystem.getComponent(ComponentType.EMITTER_RATE_STEADY);
-        if (rateSteadyComponent != null) {
-            this.rateNumParticlesExpression = rateSteadyComponent.spawnRate().bind(context, this);
-            this.rateMaxParticlesExpression = rateSteadyComponent.maxParticles().bind(context, this);
+        var rateSteady = particleSystem.getComponent(ComponentType.EMITTER_RATE_STEADY);
+        if (rateSteady != null) {
+            this.rateNumParticlesExpression = rateSteady.spawnRate().bind(context, this);
+            this.rateMaxParticlesExpression = rateSteady.maxParticles().bind(context, this);
         } else {
             this.rateNumParticlesExpression = null;
             this.rateMaxParticlesExpression = null;
         }
 
-        var rateInstantComponent = particleSystem.getComponent(ComponentType.EMITTER_RATE_INSTANT);
-        if (rateInstantComponent != null) {
+        var rateInstant = particleSystem.getComponent(ComponentType.EMITTER_RATE_INSTANT);
+        if (rateInstant != null) {
             this.emitOnce = true;
-            this.instantEmitAmount = (int) rateInstantComponent.numParticles().bind(context, this).evaluate();
+            this.instantEmitAmount = (int) rateInstant.numParticles().bind(context, this).evaluate();
         }
-
-        this.emitter = emitter;
 
         for (int i = 1; i <= 4; i++)
             this.set("random_" + i, ParticleUtils.RANDOM.nextFloat());

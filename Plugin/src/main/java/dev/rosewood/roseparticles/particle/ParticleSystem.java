@@ -110,7 +110,7 @@ public class ParticleSystem {
     }
 
     protected Hologram createHologram(Consumer<Hologram> init) {
-        return this.hologramManager.createHologram(init);
+        return this.hologramManager.createHologram(this.getOrigin().getWorld(), init);
     }
 
     protected void deleteHologram(Hologram hologram) {

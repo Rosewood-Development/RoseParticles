@@ -2,6 +2,7 @@ package dev.rosewood.roseparticles.nms;
 
 import dev.rosewood.roseparticles.nms.hologram.Hologram;
 import java.util.function.Consumer;
+import org.bukkit.World;
 
 public interface NMSHandler {
 
@@ -11,6 +12,6 @@ public interface NMSHandler {
      * @param init The consumer to call right before this hologram finishes initializing
      * @return The hologram created
      */
-    Hologram createHologram(Consumer<Hologram> init);
+    Hologram createHologram(World world, Consumer<Hologram> init);
 
 }

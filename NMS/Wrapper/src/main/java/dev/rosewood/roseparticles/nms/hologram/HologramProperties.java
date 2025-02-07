@@ -4,13 +4,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import org.bukkit.Location;
+import org.bukkit.util.Vector;
 
 public class HologramProperties {
 
     private final Map<HologramProperty<?>, Object> properties;
     private final Set<HologramProperty<?>> dirty;
-    private Location previousLocation;
+    private Vector previousLocation;
 
     public HologramProperties() {
         this.properties = new HashMap<>();
@@ -23,8 +23,8 @@ public class HologramProperties {
     }
 
     public <T> void set(HologramProperty<T> property, T value) {
-        if (property == HologramProperty.LOCATION)
-            this.previousLocation = this.get(HologramProperty.LOCATION);
+        if (property == HologramProperty.POSITION)
+            this.previousLocation = this.get(HologramProperty.POSITION);
         this.properties.put(property, value);
         this.dirty.add(property);
     }
@@ -37,9 +37,9 @@ public class HologramProperties {
         return this.dirty;
     }
 
-    public Location getPreviousLocation() {
+    public Vector getPreviousLocation() {
         if (this.previousLocation == null)
-            return this.get(HologramProperty.LOCATION);
+            return this.get(HologramProperty.POSITION);
         return this.previousLocation;
     }
 

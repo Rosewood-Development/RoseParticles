@@ -7,6 +7,7 @@ import dev.rosewood.roseparticles.nms.v1_21_R3.hologram.HologramImpl;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import net.minecraft.world.entity.Entity;
+import org.bukkit.World;
 
 public class NMSHandlerImpl implements NMSHandler {
 
@@ -20,8 +21,8 @@ public class NMSHandlerImpl implements NMSHandler {
     }
 
     @Override
-    public Hologram createHologram(Consumer<Hologram> init) {
-        return new HologramImpl(entityCounter.incrementAndGet(), init);
+    public Hologram createHologram(World world, Consumer<Hologram> init) {
+        return new HologramImpl(world, entityCounter.incrementAndGet(), init);
     }
 
 }
