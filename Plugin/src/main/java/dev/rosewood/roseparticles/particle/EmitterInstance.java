@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.bukkit.util.Vector;
 
 public class EmitterInstance extends ParticleEffect {
 
@@ -87,14 +88,21 @@ public class EmitterInstance extends ParticleEffect {
             throw new IllegalArgumentException("No emitter component");
         }
 
+        MolangExpression rateMaxParticlesExpression = null;
+
         var rateSteady = particleSystem.getComponent(ComponentType.EMITTER_RATE_STEADY);
         if (rateSteady != null) {
             this.rateNumParticlesExpression = rateSteady.spawnRate().bind(context, this);
-            this.rateMaxParticlesExpression = rateSteady.maxParticles().bind(context, this);
+            rateMaxParticlesExpression = rateSteady.maxParticles().bind(context, this);
         } else {
             this.rateNumParticlesExpression = null;
-            this.rateMaxParticlesExpression = null;
         }
+
+        var rateManual = particleSystem.getComponent(ComponentType.EMITTER_RATE_MANUAL);
+        if (rateManual != null)
+            rateMaxParticlesExpression = rateManual.maxParticles().bind(context, this);
+
+        this.rateMaxParticlesExpression = rateMaxParticlesExpression;
 
         var rateInstant = particleSystem.getComponent(ComponentType.EMITTER_RATE_INSTANT);
         if (rateInstant != null) {
@@ -156,6 +164,21 @@ public class EmitterInstance extends ParticleEffect {
             this.lastParticleAge = 0;
 
         return emission;
+    }
+
+    public ParticleInstance emitManually(Vector velocity) {
+        if (this.rateMaxParticlesExpression != null) {
+            float rateMaxParticles = this.rateMaxParticlesExpression.evaluate();
+            if (this.particleSystem.getParticleCount() >= rateMaxParticles)
+                return null;
+        }
+
+        ParticleInstance particleInstance = this.emitter.emit();
+        if (velocity != null)
+            particleInstance.setVelocity(velocity);
+
+        this.particleSystem.addParticle(particleInstance);
+        return particleInstance;
     }
 
     public boolean expired() {

@@ -163,7 +163,7 @@ public class HologramImpl extends Hologram {
             packets.add(new ClientboundSetEntityDataPacket(this.entityId, dataValues));
 
         if (includeLocation && propertiesSet.contains(HologramProperty.POSITION)) {
-            Vector previous = this.properties.getPreviousLocation();
+            Vector previous = this.properties.getPreviousPosition();
             Vector current = this.properties.get(HologramProperty.POSITION);
             if (Math.abs(previous.distanceSquared(current)) > 7.5) {
                 Vec3 position = new Vec3(current.getX(), current.getY(), current.getZ());

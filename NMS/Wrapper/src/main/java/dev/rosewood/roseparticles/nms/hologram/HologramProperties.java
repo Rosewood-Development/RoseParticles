@@ -37,7 +37,7 @@ public class HologramProperties {
         return this.dirty;
     }
 
-    public Vector getPreviousLocation() {
+    public Vector getPreviousPosition() {
         if (this.previousLocation == null)
             return this.get(HologramProperty.POSITION);
         return this.previousLocation;

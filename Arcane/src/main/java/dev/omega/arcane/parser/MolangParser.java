@@ -274,7 +274,7 @@ public class MolangParser {
                     case "query", "q" -> reference(ReferenceType.QUERY);
                     case "variable", "v" -> reference(ReferenceType.VARIABLE);
                     case "temp", "t" -> reference(ReferenceType.TEMP);
-                    case "math", "mth", "m" -> math();
+                    case "math", "m" -> math();
                     default -> throw new IllegalStateException("Unexpected value: " + string);
                 };
             }

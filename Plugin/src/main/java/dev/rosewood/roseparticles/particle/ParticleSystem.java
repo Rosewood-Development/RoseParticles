@@ -4,11 +4,14 @@ import dev.omega.arcane.reference.ExpressionBindingContext;
 import dev.rosewood.roseparticles.RoseParticles;
 import dev.rosewood.roseparticles.component.ComponentType;
 import dev.rosewood.roseparticles.component.curve.CurveDefinition;
+import dev.rosewood.roseparticles.component.event.EventDefinition;
 import dev.rosewood.roseparticles.config.SettingKey;
 import dev.rosewood.roseparticles.datapack.StitchedTexture;
 import dev.rosewood.roseparticles.manager.HologramManager;
 import dev.rosewood.roseparticles.nms.hologram.Hologram;
 import dev.rosewood.roseparticles.particle.config.ParticleFile;
+import dev.rosewood.roseparticles.particle.curve.BezierChainCurve;
+import dev.rosewood.roseparticles.particle.curve.BezierCurve;
 import dev.rosewood.roseparticles.particle.curve.CatmullRomCurve;
 import dev.rosewood.roseparticles.particle.curve.Curve;
 import dev.rosewood.roseparticles.particle.curve.LinearCurve;
@@ -33,7 +36,9 @@ public class ParticleSystem {
     private final ExpressionBindingContext molangContext;
     private final EmitterInstance emitter;
     private final List<ParticleInstance> particles;
+    private final List<ParticleInstance> newParticles;
     private final Map<String, Curve> curves;
+    private final Map<String, EventDefinition> events;
     private final float deltaTime;
     private boolean doneEmitting;
 
@@ -43,7 +48,6 @@ public class ParticleSystem {
 
     public ParticleSystem(HologramManager hologramManager, Location origin, ParticleFile particleFile, StitchedTexture texture) {
         this(hologramManager, null, origin, particleFile, texture);
-
     }
 
     private ParticleSystem(HologramManager hologramManager, Entity entity, Location origin, ParticleFile particleFile, StitchedTexture texture) {
@@ -54,7 +58,9 @@ public class ParticleSystem {
         this.texture = texture;
         this.molangContext = ExpressionBindingContext.create();
         this.particles = new LinkedList<>();
+        this.newParticles = new ArrayList<>();
         this.curves = new HashMap<>();
+        this.events = particleFile.events();
         this.deltaTime = SettingKey.UPDATE_FREQUENCY.get() / 20F;
 
         List<CurveDefinition> curveDefinitions = this.particleFile.curves();
@@ -79,8 +85,8 @@ public class ParticleSystem {
 
             Curve curve = switch (curveDefinition.type()) {
                 case LINEAR -> new LinearCurve(curveDefinition.input(), curveDefinition.horizontalRange(), curveDefinition.nodes());
-                case BEZIER -> throw new IllegalStateException("Unsupported");
-                case BEZIER_CHAIN -> throw new IllegalStateException("Unsupported");
+                case BEZIER -> new BezierCurve(curveDefinition.input(), curveDefinition.horizontalRange(), curveDefinition.nodes());
+                case BEZIER_CHAIN -> new BezierChainCurve(curveDefinition.input(), curveDefinition.horizontalRange(), curveDefinition.bezierChainNodes());
                 case CATMULL_ROM -> new CatmullRomCurve(curveDefinition.input(), curveDefinition.horizontalRange(), curveDefinition.nodes());
             };
             this.curves.put(name, curve);
@@ -118,14 +124,14 @@ public class ParticleSystem {
     }
 
     public void update() {
-        List<ParticleInstance> newParticles = new ArrayList<>();
         if (!this.doneEmitting) {
-            newParticles.addAll(this.emitter.update(this.deltaTime));
+            this.newParticles.addAll(this.emitter.update(this.deltaTime));
             if (this.emitter.expired())
                 this.doneEmitting = true;
         }
 
-        this.particles.addAll(newParticles);
+        this.particles.addAll(this.newParticles);
+        this.newParticles.clear();
 
         this.particles.removeIf(particle -> {
             particle.update(this.deltaTime);
@@ -138,15 +144,23 @@ public class ParticleSystem {
         });
     }
 
+    protected void playEvent(String event, ParticleInstance particleInstance) {
+        EventDefinition eventDefinition = this.events.get(event.toLowerCase());
+        if (eventDefinition != null)
+            eventDefinition.play(this, particleInstance);
+    }
+
+    protected void addParticle(ParticleInstance particleInstance) {
+        this.newParticles.add(particleInstance);
+    }
+
     public void remove() {
         this.doneEmitting = true;
         this.particles.forEach(ParticleInstance::remove);
         this.particles.clear();
+        this.newParticles.forEach(ParticleInstance::remove);
+        this.newParticles.clear();
     }
-
-//    public void addParticle(ParticleEffect particleEffect) {
-//        this.particles.add(particleEffect);
-//    }
 
     @Nullable
     public <T> T getComponent(ComponentType<T> componentType) {

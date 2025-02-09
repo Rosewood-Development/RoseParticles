@@ -6,6 +6,7 @@ import com.google.gson.JsonParser;
 import dev.rosewood.roseparticles.RoseParticles;
 import dev.rosewood.roseparticles.component.ComponentType;
 import dev.rosewood.roseparticles.component.curve.CurveDefinition;
+import dev.rosewood.roseparticles.component.event.EventDefinition;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ public record ParticleFile(File file,
                            String formatVersion,
                            ParticleDescription description,
                            List<CurveDefinition> curves,
+                           Map<String, EventDefinition> events,
                            Map<ComponentType<?>, Object> components) {
 
     public static final String FORMAT_VERSION = "1.10.0";
@@ -55,6 +57,20 @@ public record ParticleFile(File file,
                 curves = List.of();
             }
 
+            Map<String, EventDefinition> events;
+            if (particleEffectObject.has("events")) {
+                JsonObject eventsObject = particleEffectObject.get("events").getAsJsonObject();
+                Set<String> eventIdentifiers = eventsObject.keySet();
+                events = new HashMap<>();
+                for (String identifier : eventIdentifiers) {
+                    JsonObject eventObject = eventsObject.get(identifier).getAsJsonObject();
+                    EventDefinition eventDefinition = EventDefinition.parse(eventObject);
+                    events.put(identifier.toLowerCase(), eventDefinition);
+                }
+            } else {
+                events = Map.of();
+            }
+
             JsonObject componentsObject = particleEffectObject.get("components").getAsJsonObject();
 
             Map<ComponentType<?>, Object> components = new HashMap<>();
@@ -72,7 +88,7 @@ public record ParticleFile(File file,
                 }
             }
 
-            return new ParticleFile(file, formatVersion, description, curves, components);
+            return new ParticleFile(file, formatVersion, description, curves, events, components);
         } catch (Exception e) {
             RoseParticles.getInstance().getLogger().warning("Invalid particle file: %s".formatted(file.getName()));
             e.printStackTrace();

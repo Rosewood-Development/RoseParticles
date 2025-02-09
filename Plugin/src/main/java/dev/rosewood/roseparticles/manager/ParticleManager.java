@@ -10,10 +10,10 @@ import dev.rosewood.roseparticles.datapack.TextureStitcher;
 import dev.rosewood.roseparticles.particle.ParticleSystem;
 import dev.rosewood.roseparticles.particle.config.ParticleFile;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -25,6 +25,7 @@ public class ParticleManager extends Manager implements Listener {
 
     private final HologramManager hologramManager;
     private final List<ParticleSystem> particleSystems;
+    private final List<ParticleSystem> newParticleSystems;
     private final ResourceServer resourceServer;
     private final Map<String, ParticleFile> particleFiles;
     private TextureStitcher textureStitcher;
@@ -33,7 +34,8 @@ public class ParticleManager extends Manager implements Listener {
     public ParticleManager(RosePlugin rosePlugin) {
         super(rosePlugin);
         this.hologramManager = rosePlugin.getManager(HologramManager.class);
-        this.particleSystems = new CopyOnWriteArrayList<>();
+        this.particleSystems = new ArrayList<>();
+        this.newParticleSystems = new ArrayList<>();
         this.resourceServer = new ResourceServer(this.rosePlugin);
         this.particleFiles = new HashMap<>();
         Bukkit.getPluginManager().registerEvents(this, rosePlugin);
@@ -55,11 +57,8 @@ public class ParticleManager extends Manager implements Listener {
                     continue;
 
                 ParticleFile particleFile = ParticleFile.parse(file);
-                if (particleFile != null) {
-                    String name = file.getName();
-                    name = name.substring(0, name.lastIndexOf('.'));
-                    this.particleFiles.put(name, particleFile);
-                }
+                if (particleFile != null)
+                    this.particleFiles.put(particleFile.description().identifier().toLowerCase(), particleFile);
             }
         }
 
@@ -94,17 +93,23 @@ public class ParticleManager extends Manager implements Listener {
         this.particleFiles.clear();
     }
 
-    public void spawnParticleSystem(Location origin, ParticleFile particleFile) {
+    public ParticleSystem spawnParticleSystem(Location origin, ParticleFile particleFile) {
         StitchedTexture texture = this.textureStitcher.getTexture(particleFile.description().identifier());
-        this.particleSystems.add(new ParticleSystem(this.hologramManager, origin, particleFile, texture));
+        ParticleSystem particleSystem = new ParticleSystem(this.hologramManager, origin, particleFile, texture);
+        this.newParticleSystems.add(particleSystem);
+        return particleSystem;
     }
 
-    public void spawnParticleSystem(Entity entity, ParticleFile particleFile) {
+    public ParticleSystem spawnParticleSystem(Entity entity, ParticleFile particleFile) {
         StitchedTexture texture = this.textureStitcher.getTexture(particleFile.description().identifier());
-        this.particleSystems.add(new ParticleSystem(this.hologramManager, entity, particleFile, texture));
+        ParticleSystem particleSystem = new ParticleSystem(this.hologramManager, entity, particleFile, texture);
+        this.newParticleSystems.add(particleSystem);
+        return particleSystem;
     }
 
     public void update() {
+        this.particleSystems.addAll(this.newParticleSystems);
+        this.newParticleSystems.clear();
         this.particleSystems.removeIf(particleSystem -> {
             try {
                 particleSystem.update();

@@ -30,7 +30,7 @@ public record ParticleMotionCollisionEvent(String event,
 
     private static ParticleMotionCollisionEvent parse(JsonObject jsonObject) {
         String event = jsonObject.get("event").getAsString();
-        float minSpeed = Math.min(2, JsonHelper.parseFloat(jsonObject, "min_speed", 2));
+        float minSpeed = JsonHelper.parseFloat(jsonObject, "min_speed", 2);
         return new ParticleMotionCollisionEvent(event, minSpeed);
     }
 

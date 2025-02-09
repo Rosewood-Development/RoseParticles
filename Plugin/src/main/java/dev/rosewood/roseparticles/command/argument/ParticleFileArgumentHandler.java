@@ -23,7 +23,7 @@ public class ParticleFileArgumentHandler extends ArgumentHandler<ParticleFile> {
         String input = inputIterator.next();
 
         ParticleManager particleManager = commandContext.getRosePlugin().getManager(ParticleManager.class);
-        ParticleFile particleFile = particleManager.getParticleFiles().get(input);
+        ParticleFile particleFile = particleManager.getParticleFiles().get(input.toLowerCase());
         if (particleFile == null)
             throw new HandledArgumentException("argument-handler-particle-file", StringPlaceholders.of("input", input));
 

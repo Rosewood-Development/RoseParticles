@@ -8,6 +8,7 @@ import dev.rosewood.roseparticles.component.ComponentType;
 import dev.rosewood.roseparticles.component.model.MolangExpressionVector2;
 import dev.rosewood.roseparticles.component.model.MolangExpressionVector3;
 import dev.rosewood.roseparticles.component.model.Vector2;
+import dev.rosewood.roseparticles.component.particle.motion.ParticleMotionCollisionEvent;
 import dev.rosewood.roseparticles.config.SettingKey;
 import dev.rosewood.roseparticles.datapack.StitchedTexture;
 import dev.rosewood.roseparticles.nms.hologram.Hologram;
@@ -20,6 +21,7 @@ import dev.rosewood.roseparticles.particle.curve.Curve;
 import dev.rosewood.roseparticles.util.ParticleUtils;
 import dev.rosewood.roseparticles.util.RayTracer;
 import java.awt.Color;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import net.kyori.adventure.key.Key;
@@ -56,6 +58,7 @@ public class ParticleInstance extends ParticleEffect {
     private final float collisionDrag;
     private final float coefficientOfRestitution;
     private final float collisionRadius;
+    private final List<ParticleMotionCollisionEvent> collisionEvents;
     private final boolean expireOnContact;
     private final MolangExpression perRenderExpression;
     private final boolean localPosition;
@@ -149,12 +152,14 @@ public class ParticleInstance extends ParticleEffect {
             this.coefficientOfRestitution = motionCollision.coefficientOfRestitution();
             this.collisionRadius = motionCollision.collisionRadius();
             this.expireOnContact = motionCollision.expireOnContact();
+            this.collisionEvents = motionCollision.events();
         } else {
             this.worldCollision = null;
             this.collisionDrag = 0;
             this.coefficientOfRestitution = 0;
             this.collisionRadius = 0;
             this.expireOnContact = false;
+            this.collisionEvents = null;
         }
 
         var particleInitialization = particleSystem.getComponent(ComponentType.PARTICLE_INITIALIZATION);
@@ -297,11 +302,10 @@ public class ParticleInstance extends ParticleEffect {
     }
 
     private void collide(float deltaTime, int depth) {
-        Location origin = this.particleSystem.getOrigin();
-        if (this.worldCollision != null) {
-            Location startLocation = origin.clone().add(this.position);
+        if (this.worldCollision != null && !this.localPosition) {
+            Vector startLocation = this.position.clone();
             RayTracer.RayTraceOutput hit = RayTracer.rayTrace(
-                    startLocation,
+                    startLocation.toLocation(this.particleSystem.getOrigin().getWorld()),
                     this.velocity.clone().normalize(),
                     this.velocity.length() * deltaTime,
                     this.collisionRadius
@@ -315,9 +319,6 @@ public class ParticleInstance extends ParticleEffect {
 
                 if (!this.worldCollision)
                     return;
-
-                // Restore relativity
-                hit.hitPosition().subtract(origin);
 
                 Vector normal = hit.hitFace().getDirection();
                 Vector hitPosition = hit.hitPosition().toVector();
@@ -337,12 +338,23 @@ public class ParticleInstance extends ParticleEffect {
                 this.velocity = reflected.add(tangentVelocity.multiply(-this.collisionDrag));
 
                 // Calculate remaining movement time
-                float collisionTime = (float) (hitPosition.distance(startLocation.toVector()) / this.velocity.length());
+                float collisionTime = (float) (hitPosition.distance(startLocation) / this.velocity.length());
                 float remainingTime = deltaTime - collisionTime;
 
                 // Recursive collision check with remaining time up to 2 extra times
                 if (remainingTime > 0 && depth < 2)
                     this.collide(remainingTime, depth + 1);
+
+                // Play events after all collisions are done
+                if (depth == 0) {
+                    Vector originalPosition = this.position;
+                    this.position = hitPosition;
+                    double speed = this.velocity.length();
+                    for (ParticleMotionCollisionEvent event : this.collisionEvents)
+                        if (event.minSpeed() <= speed)
+                            this.particleSystem.playEvent(event.event(), this);
+                    this.position = originalPosition;
+                }
             } else {
                 this.position.add(this.velocity.clone().multiply(deltaTime));
             }
@@ -365,6 +377,18 @@ public class ParticleInstance extends ParticleEffect {
             return true;
 
         return false;
+    }
+
+    public Location getLocation() {
+        return this.getEffectivePosition().toLocation(this.particleSystem.getOrigin().getWorld());
+    }
+
+    public Vector getVelocity() {
+        return this.velocity.clone();
+    }
+
+    public void setVelocity(Vector velocity) {
+        this.velocity = velocity;
     }
 
     private void updateTextDisplay() {

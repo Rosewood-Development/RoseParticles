@@ -6,16 +6,17 @@ import dev.omega.arcane.ast.MolangExpression;
 import dev.omega.arcane.exception.MolangLexException;
 import dev.omega.arcane.exception.MolangParseException;
 import dev.rosewood.roseparticles.util.JsonHelper;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 public record CurveDefinition(String name,
                               CurveType type,
                               MolangExpression input,
                               MolangExpression horizontalRange,
                               List<Float> nodes,
-                              Map<Float, ChainNode> bezierChainNodes) {
+                              SortedMap<Float, ChainNode> bezierChainNodes) {
 
     public static CurveDefinition parse(String name, JsonObject jsonObject) throws MolangLexException, MolangParseException {
         CurveType type = CurveType.parse(jsonObject, "type", CurveType.LINEAR);
@@ -23,9 +24,9 @@ public record CurveDefinition(String name,
         MolangExpression horizontalRange = JsonHelper.parseMolang(jsonObject, "horizontal_range");
         JsonElement nodesElement = jsonObject.get("nodes");
         List<Float> nodes = JsonHelper.parseFloatList(nodesElement);
-        Map<Float, ChainNode> bezierChainNodes;
+        SortedMap<Float, ChainNode> bezierChainNodes;
         if (nodesElement.isJsonObject()) {
-            bezierChainNodes = new HashMap<>();
+            bezierChainNodes = new TreeMap<>();
             JsonObject nodesObject = nodesElement.getAsJsonObject();
             for (String key : nodesObject.keySet()) {
                 float node = Float.parseFloat(key);
@@ -35,7 +36,7 @@ public record CurveDefinition(String name,
                 bezierChainNodes.put(node, new ChainNode(value, slope));
             }
         } else {
-            bezierChainNodes = Map.of();
+            bezierChainNodes = Collections.emptySortedMap();
         }
         return new CurveDefinition(name, type, input, horizontalRange, nodes, bezierChainNodes);
     }
