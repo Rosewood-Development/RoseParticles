@@ -144,7 +144,7 @@ public class ParticleSystem {
         });
     }
 
-    protected void playEvent(String event, ParticleInstance particleInstance) {
+    public void playEvent(String event, ParticleInstance particleInstance) {
         EventDefinition eventDefinition = this.events.get(event.toLowerCase());
         if (eventDefinition != null)
             eventDefinition.play(this, particleInstance);

@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -27,7 +28,7 @@ public class ParticleManager extends Manager implements Listener {
     private final List<ParticleSystem> particleSystems;
     private final List<ParticleSystem> newParticleSystems;
     private final ResourceServer resourceServer;
-    private final Map<String, ParticleFile> particleFiles;
+    private final Map<NamespacedKey, ParticleFile> particleFiles;
     private TextureStitcher textureStitcher;
     private ScheduledTask particleTask;
 
@@ -57,8 +58,10 @@ public class ParticleManager extends Manager implements Listener {
                     continue;
 
                 ParticleFile particleFile = ParticleFile.parse(file);
-                if (particleFile != null)
-                    this.particleFiles.put(particleFile.description().identifier().toLowerCase(), particleFile);
+                if (particleFile != null) {
+                    NamespacedKey key = NamespacedKey.fromString(particleFile.description().identifier().toLowerCase(), this.rosePlugin);
+                    this.particleFiles.put(key, particleFile);
+                }
             }
         }
 
@@ -77,14 +80,39 @@ public class ParticleManager extends Manager implements Listener {
             this.resourceServer.start();
     }
 
-    public Map<String, ParticleFile> getParticleFiles() {
+    public Map<NamespacedKey, ParticleFile> getParticleFiles() {
         return this.particleFiles;
+    }
+
+    public ParticleFile getParticleFile(String query) {
+        int colon = query.indexOf(':');
+        if (colon == query.length() - 1)
+            return null;
+
+        if (colon != -1) {
+            String namespace = query.substring(0, colon);
+            String key = query.substring(colon + 1);
+            NamespacedKey namespacedKey = new NamespacedKey(namespace, key);
+            ParticleFile particleFile = this.particleFiles.get(namespacedKey);
+            if (particleFile != null)
+                return particleFile;
+            query = key;
+        }
+
+        for (var entry : this.particleFiles.entrySet())
+            if (entry.getKey().getKey().equals(query))
+                return entry.getValue();
+
+        return null;
     }
 
     @Override
     public void disable() {
         this.particleSystems.forEach(ParticleSystem::remove);
         this.particleSystems.clear();
+
+        this.newParticleSystems.forEach(ParticleSystem::remove);
+        this.newParticleSystems.clear();
 
         this.particleTask.cancel();
         this.particleTask = null;

@@ -17,6 +17,7 @@ import dev.rosewood.roseparticles.nms.hologram.HologramProperty;
 import dev.rosewood.roseparticles.particle.color.ExpressionParticleColor;
 import dev.rosewood.roseparticles.particle.color.GradientParticleColor;
 import dev.rosewood.roseparticles.particle.color.ParticleColor;
+import dev.rosewood.roseparticles.particle.controller.LifetimeEventController;
 import dev.rosewood.roseparticles.particle.curve.Curve;
 import dev.rosewood.roseparticles.util.ParticleUtils;
 import dev.rosewood.roseparticles.util.RayTracer;
@@ -46,6 +47,8 @@ public class ParticleInstance extends ParticleEffect {
     private final ParticleSystem particleSystem;
     private final Map<String, Curve> curves;
     private final StitchedTexture texture;
+    private final float[] randoms;
+    private final LifetimeEventController lifetimeEventController;
     private final MolangExpression expirationExpression;
     private final MolangExpressionVector2 sizeExpression;
     private final Display.Billboard displayBillboard;
@@ -54,7 +57,7 @@ public class ParticleInstance extends ParticleEffect {
     private final MolangExpression rotationAccelerationExpression;
     private final MolangExpression rotationDragExpression;
     private final boolean worldLighting;
-    private final Boolean worldCollision;
+    private final MolangExpression collisionExpression;
     private final float collisionDrag;
     private final float coefficientOfRestitution;
     private final float collisionRadius;
@@ -64,9 +67,14 @@ public class ParticleInstance extends ParticleEffect {
     private final boolean localPosition;
     private final boolean localRotation;
     private final boolean localVelocity;
+    private final MolangExpressionVector3 relativePositionExpression;
+    private final MolangExpressionVector3 relativeDirectionExpression;
+    private final MolangExpression relativeRotationExpression;
 
+    private Vector offset;
     private Vector position;
     private Vector velocity;
+    private Vector direction;
     private Hologram hologram;
     private int currentTextureIndex;
     private ParticleColor color;
@@ -79,6 +87,7 @@ public class ParticleInstance extends ParticleEffect {
     public ParticleInstance(ParticleSystem particleSystem) {
         this.particleSystem = particleSystem;
         ExpressionBindingContext context = this.particleSystem.getMolangContext();
+        EmitterInstance emitterInstance = this.particleSystem.getEmitter();
         this.curves = particleSystem.getCurves().entrySet().stream()
                 .map(x -> Map.entry(x.getKey(), x.getValue().bind(context, this)))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -86,14 +95,14 @@ public class ParticleInstance extends ParticleEffect {
 
         // Init variables
         this.set("age", 0);
-        for (int i = 1; i <= 4; i++)
-            this.set("random_" + i, ParticleUtils.RANDOM.nextFloat());
+
+        this.randoms = new float[]{ParticleUtils.RANDOM.nextFloat(), ParticleUtils.RANDOM.nextFloat(), ParticleUtils.RANDOM.nextFloat(), ParticleUtils.RANDOM.nextFloat()};
 
         var lifetimeExpression = particleSystem.getComponent(ComponentType.PARTICLE_LIFETIME_EXPRESSION);
         if (lifetimeExpression != null) {
-            this.expirationExpression = lifetimeExpression.expirationExpression().bind(context, this, this.particleSystem.getEmitter());
+            this.expirationExpression = lifetimeExpression.expirationExpression().bind(context, this, emitterInstance);
 
-            MolangExpression maxLifetimeExpression = lifetimeExpression.maxLifetime().bind(context, this, this.particleSystem.getEmitter());
+            MolangExpression maxLifetimeExpression = lifetimeExpression.maxLifetime().bind(context, this, emitterInstance);
             float lifetime = maxLifetimeExpression.evaluate();
             this.set("lifetime", lifetime);
         } else {
@@ -106,15 +115,15 @@ public class ParticleInstance extends ParticleEffect {
         var appearanceTinting = particleSystem.getComponent(ComponentType.PARTICLE_APPEARANCE_TINTING);
         if (appearanceTinting != null) {
             if (appearanceTinting.colorExpression() != null) {
-                this.color = new ExpressionParticleColor(appearanceTinting.colorExpression().bind(context, this, this.particleSystem.getEmitter()));
+                this.color = new ExpressionParticleColor(appearanceTinting.colorExpression().bind(context, this, emitterInstance));
             } else {
-                this.color = new GradientParticleColor(appearanceTinting.gradientInterpolant().bind(context, this, this.particleSystem.getEmitter()), appearanceTinting.gradientMap());
+                this.color = new GradientParticleColor(appearanceTinting.gradientInterpolant().bind(context, this, emitterInstance), appearanceTinting.gradientMap());
             }
         }
 
         var appearanceBillboard = particleSystem.getComponent(ComponentType.PARTICLE_APPEARANCE_BILLBOARD);
         if (appearanceBillboard != null) {
-            this.sizeExpression = appearanceBillboard.size().bind(context, this, this.particleSystem.getEmitter());
+            this.sizeExpression = appearanceBillboard.size().bind(context, this, emitterInstance);
             switch (appearanceBillboard.faceCameraMode()) { // TODO: Finish camera modes
                 default -> this.displayBillboard = Display.Billboard.CENTER;
             }
@@ -125,16 +134,16 @@ public class ParticleInstance extends ParticleEffect {
 
         var initialSpin = particleSystem.getComponent(ComponentType.PARTICLE_INITIAL_SPIN);
         if (initialSpin != null) {
-            this.rotation = initialSpin.rotation().bind(context, this, this.particleSystem.getEmitter()).evaluate();
-            this.rotationRate = initialSpin.rotationRate().bind(context, this, this.particleSystem.getEmitter()).evaluate();
+            this.rotation = initialSpin.rotation().bind(context, this, emitterInstance).evaluate();
+            this.rotationRate = initialSpin.rotationRate().bind(context, this, emitterInstance).evaluate();
         }
 
         var motionDynamic = particleSystem.getComponent(ComponentType.PARTICLE_MOTION_DYNAMIC);
         if (motionDynamic != null) {
-            this.accelerationExpression = motionDynamic.linearAcceleration().bind(context, this, this.particleSystem.getEmitter());
-            this.dragExpression = motionDynamic.linearDragCoefficient().bind(context, this, this.particleSystem.getEmitter());
-            this.rotationAccelerationExpression = motionDynamic.rotationAcceleration().bind(context, this, this.particleSystem.getEmitter());
-            this.rotationDragExpression = motionDynamic.rotationDragCoefficient().bind(context, this, this.particleSystem.getEmitter());
+            this.accelerationExpression = motionDynamic.linearAcceleration().bind(context, this, emitterInstance);
+            this.dragExpression = motionDynamic.linearDragCoefficient().bind(context, this, emitterInstance);
+            this.rotationAccelerationExpression = motionDynamic.rotationAcceleration().bind(context, this, emitterInstance);
+            this.rotationDragExpression = motionDynamic.rotationDragCoefficient().bind(context, this, emitterInstance);
         } else {
             this.accelerationExpression = null;
             this.dragExpression = null;
@@ -142,19 +151,34 @@ public class ParticleInstance extends ParticleEffect {
             this.rotationDragExpression = null;
         }
 
+        var motionParametric = particleSystem.getComponent(ComponentType.PARTICLE_MOTION_PARAMETRIC);
+        if (motionParametric != null) {
+            this.relativePositionExpression = motionParametric.relativePosition().bind(context, this, emitterInstance);
+            if (motionParametric.direction() != null) {
+                this.relativeDirectionExpression = motionParametric.direction().bind(context, this, emitterInstance);
+            } else {
+                this.relativeDirectionExpression = null;
+            }
+            this.relativeRotationExpression = motionParametric.rotation().bind(context, this, emitterInstance);
+        } else {
+            this.relativePositionExpression = null;
+            this.relativeDirectionExpression = null;
+            this.relativeRotationExpression = null;
+        }
+
         var appearanceLighting = particleSystem.getComponent(ComponentType.PARTICLE_APPEARANCE_LIGHTING);
         this.worldLighting = appearanceLighting != null;
 
         var motionCollision = particleSystem.getComponent(ComponentType.PARTICLE_MOTION_COLLISION);
         if (motionCollision != null) {
-            this.worldCollision = motionCollision.enabled();
+            this.collisionExpression = motionCollision.enabledExpression().bind(context, this, emitterInstance);
             this.collisionDrag = motionCollision.collisionDrag();
             this.coefficientOfRestitution = motionCollision.coefficientOfRestitution();
             this.collisionRadius = motionCollision.collisionRadius();
             this.expireOnContact = motionCollision.expireOnContact();
             this.collisionEvents = motionCollision.events();
         } else {
-            this.worldCollision = null;
+            this.collisionExpression = null;
             this.collisionDrag = 0;
             this.coefficientOfRestitution = 0;
             this.collisionRadius = 0;
@@ -164,7 +188,7 @@ public class ParticleInstance extends ParticleEffect {
 
         var particleInitialization = particleSystem.getComponent(ComponentType.PARTICLE_INITIALIZATION);
         if (particleInitialization != null) {
-            this.perRenderExpression = particleInitialization.perRenderExpression().bind(context, this, this.particleSystem.getEmitter());
+            this.perRenderExpression = particleInitialization.perRenderExpression().bind(context, this, emitterInstance);
         } else {
             this.perRenderExpression = null;
         }
@@ -179,6 +203,13 @@ public class ParticleInstance extends ParticleEffect {
             this.localRotation = false;
             this.localVelocity = false;
         }
+
+        var lifetimeEvents = particleSystem.getComponent(ComponentType.PARTICLE_LIFETIME_EVENTS);
+        if (lifetimeEvents != null) {
+            this.lifetimeEventController = new LifetimeEventController(particleSystem, this, lifetimeEvents);
+        } else {
+            this.lifetimeEventController = null;
+        }
     }
 
     /**
@@ -189,7 +220,16 @@ public class ParticleInstance extends ParticleEffect {
      * @param direction The initial direction, to be multiplied by the initial speed
      */
     public void init(Vector position, Vector direction) {
+        this.offset = position.clone();
         this.position = position;
+        this.direction = direction.clone().normalize();
+
+        if (this.relativePositionExpression != null) {
+            this.position = this.relativePositionExpression.evaluate().add(this.offset);
+            this.rotation = this.relativeRotationExpression.evaluate();
+            if (this.relativeDirectionExpression != null)
+                this.direction = this.relativeDirectionExpression.evaluate();
+        }
 
         if (!this.localPosition)
             this.position.add(this.particleSystem.getOrigin().toVector());
@@ -201,9 +241,6 @@ public class ParticleInstance extends ParticleEffect {
         } else {
             speed = new Vector();
         }
-
-        Vector2 scale = this.sizeExpression.evaluate();
-        this.currentScale = new Vector3f(scale.x() * 10, scale.y() * 10, 0);
 
         if (speed.lengthSquared() == 0 || direction.lengthSquared() == 0) {
             this.velocity = new Vector();
@@ -220,6 +257,18 @@ public class ParticleInstance extends ParticleEffect {
                 this.velocity.add(velocity);
             }
         }
+
+        if (this.lifetimeEventController != null)
+            this.lifetimeEventController.onCreation();
+
+        if (this.texture == null)
+            return;
+
+        if (this.color != null)
+            this.currentColor = this.color.get();
+
+        Vector2 scale = this.sizeExpression.evaluate();
+        this.currentScale = new Vector3f(scale.x() * 10, scale.y() * 10, 0);
 
         this.updateTextDisplay();
     }
@@ -244,11 +293,27 @@ public class ParticleInstance extends ParticleEffect {
         }
 
         // Handles collision and position updates
-        this.collide(deltaTime, 0);
+        float nextRotation = this.rotation + this.rotationRate * deltaTime;
+        Vector nextDirection = null;
+        if (this.relativePositionExpression != null) {
+            this.offset.add(this.velocity.clone().multiply(deltaTime));
+            this.position = this.relativePositionExpression.evaluate().add(this.offset);
+            if (!this.localPosition)
+                this.position.add(this.particleSystem.getOrigin().toVector());
+            nextRotation = this.relativeRotationExpression.evaluate();
+            if (this.relativeDirectionExpression != null)
+                nextDirection = this.relativeDirectionExpression.evaluate();
+        } else {
+            this.collide(deltaTime, 0);
+        }
 
         this.set("age", this.get("age") + deltaTime);
 
-        float nextRotation = this.rotation + this.rotationRate * deltaTime;
+        if (this.lifetimeEventController != null)
+            this.lifetimeEventController.update();
+
+        if (this.texture == null) // Nothing to render, don't even create the text display
+            return;
 
         // Use texture linearly relative to age
         boolean updateDisplay = false;
@@ -285,6 +350,11 @@ public class ParticleInstance extends ParticleEffect {
         Vector location = this.getEffectivePosition();
         this.hologram.getProperties().set(HologramProperty.POSITION, location);
 
+        if (nextDirection != null && !nextDirection.equals(this.direction)) {
+            this.direction = nextDirection;
+            this.hologram.getProperties().set(HologramProperty.ROTATION, this.direction);
+        }
+
         this.hologram.update();
     }
 
@@ -302,7 +372,7 @@ public class ParticleInstance extends ParticleEffect {
     }
 
     private void collide(float deltaTime, int depth) {
-        if (this.worldCollision != null && !this.localPosition) {
+        if (this.collisionExpression != null && !this.localPosition) {
             Vector startLocation = this.position.clone();
             RayTracer.RayTraceOutput hit = RayTracer.rayTrace(
                     startLocation.toLocation(this.particleSystem.getOrigin().getWorld()),
@@ -317,7 +387,7 @@ public class ParticleInstance extends ParticleEffect {
                     return;
                 }
 
-                if (!this.worldCollision)
+                if (this.collisionExpression.evaluate() != 1.0F)
                     return;
 
                 Vector normal = hit.hitFace().getDirection();
@@ -331,7 +401,7 @@ public class ParticleInstance extends ParticleEffect {
 
                 // Reflect velocity
                 double dot = this.velocity.dot(normal);
-                Vector reflected = this.velocity.clone().subtract(normal.multiply(2 * dot * this.coefficientOfRestitution));
+                Vector reflected = this.velocity.clone().subtract(normal.clone().multiply(2 * dot * this.coefficientOfRestitution));
 
                 // Apply friction parallel to surface
                 Vector tangentVelocity = this.velocity.clone().subtract(normal.clone().multiply(this.velocity.dot(normal)));
@@ -342,7 +412,7 @@ public class ParticleInstance extends ParticleEffect {
                 float remainingTime = deltaTime - collisionTime;
 
                 // Recursive collision check with remaining time up to 2 extra times
-                if (remainingTime > 0 && depth < 2)
+                if (remainingTime > 0.001 && depth < 2)
                     this.collide(remainingTime, depth + 1);
 
                 // Play events after all collisions are done
@@ -364,19 +434,21 @@ public class ParticleInstance extends ParticleEffect {
     }
 
     public boolean expired() {
-        if (this.contactExpired)
-            return true;
+        boolean expired = this.contactExpired;
 
-        if (this.expirationExpression != null) {
+        if (!expired && this.expirationExpression != null) {
             float value = this.expirationExpression.evaluate();
             if (value != 0)
-                return true;
+                expired = true;
         }
 
-        if (this.has("lifetime") && this.get("age") >= this.get("lifetime"))
-            return true;
+        if (!expired && this.has("lifetime") && this.get("age") >= this.get("lifetime"))
+            expired = true;
 
-        return false;
+        if (expired && this.lifetimeEventController != null)
+            this.lifetimeEventController.onExpiration();
+
+        return expired;
     }
 
     public Location getLocation() {
@@ -397,6 +469,7 @@ public class ParticleInstance extends ParticleEffect {
             this.hologram = this.particleSystem.createHologram(hologram -> {
                 HologramProperties properties = hologram.getProperties();
                 properties.set(HologramProperty.POSITION, location);
+                properties.set(HologramProperty.ROTATION, this.direction);
                 if (!this.worldLighting)
                     properties.set(HologramProperty.BRIGHTNESS, new Display.Brightness(15, 15));
                 properties.set(HologramProperty.BILLBOARD, this.displayBillboard);
@@ -405,9 +478,6 @@ public class ParticleInstance extends ParticleEffect {
                 properties.set(HologramProperty.INTERPOLATION_DELAY, delay);
                 properties.set(HologramProperty.TRANSFORMATION_DELAY, delay);
                 properties.set(HologramProperty.POSITION_ROTATION_DELAY, delay);
-
-                if (this.color != null)
-                    this.currentColor = this.color.get();
 
                 if (this.currentScale != null || this.rotation != 0) {
                     Transformation transformation = new Transformation(new Vector3f(), new Quaternionf(), new Vector3f(), new Quaternionf());
@@ -451,16 +521,29 @@ public class ParticleInstance extends ParticleEffect {
 
     @Override
     public float get(String identifier) {
-        return super.get(mapIdentifier(identifier));
+        return switch (identifier) {
+            case "particle_random_1" -> this.randoms[0];
+            case "particle_random_2" -> this.randoms[1];
+            case "particle_random_3" -> this.randoms[2];
+            case "particle_random_4" -> this.randoms[3];
+            default -> super.get(mapIdentifier(identifier));
+        };
     }
 
     @Override
     public boolean has(String identifier) {
-        return super.has(mapIdentifier(identifier));
+        return switch (identifier) {
+            case "particle_random_1", "particle_random_2", "particle_random_3", "particle_random_4" -> true;
+            default -> super.has(mapIdentifier(identifier));
+        };
     }
 
     @Override
     public void set(String identifier, float value) {
+        switch (identifier) {
+            case "particle_random_1", "particle_random_2", "particle_random_3", "particle_random_4" -> {}
+            default -> super.set(mapIdentifier(identifier), value);
+        };
         super.set(mapIdentifier(identifier), value);
     }
 

@@ -47,7 +47,7 @@ public final class JsonHelper {
     }
 
     public static List<String> parseStringList(JsonElement element) {
-        if (element.isJsonObject())
+        if (element.isJsonPrimitive())
             return List.of(element.getAsString());
         if (element.isJsonArray()) {
             JsonArray jsonArray = element.getAsJsonArray();

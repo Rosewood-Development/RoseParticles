@@ -21,7 +21,7 @@ public record CurveDefinition(String name,
     public static CurveDefinition parse(String name, JsonObject jsonObject) throws MolangLexException, MolangParseException {
         CurveType type = CurveType.parse(jsonObject, "type", CurveType.LINEAR);
         MolangExpression input = JsonHelper.parseMolang(jsonObject, "input");
-        MolangExpression horizontalRange = JsonHelper.parseMolang(jsonObject, "horizontal_range");
+        MolangExpression horizontalRange = JsonHelper.parseMolang(jsonObject, "horizontal_range", 1.0F);
         JsonElement nodesElement = jsonObject.get("nodes");
         List<Float> nodes = JsonHelper.parseFloatList(nodesElement);
         SortedMap<Float, ChainNode> bezierChainNodes;

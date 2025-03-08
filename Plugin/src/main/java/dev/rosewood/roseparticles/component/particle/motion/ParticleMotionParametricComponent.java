@@ -15,7 +15,7 @@ public record ParticleMotionParametricComponent(MolangExpressionVector3 relative
     public static ParticleMotionParametricComponent parse(JsonElement jsonElement) throws MolangLexException, MolangParseException {
         JsonObject jsonObject = jsonElement.getAsJsonObject();
         MolangExpressionVector3 relativePosition = MolangExpressionVector3.parse(jsonObject, "relative_position");
-        MolangExpressionVector3 direction = MolangExpressionVector3.parse(jsonObject, "direction");
+        MolangExpressionVector3 direction = MolangExpressionVector3.parse(jsonObject, "direction", null);
         MolangExpression rotation = JsonHelper.parseMolang(jsonObject, "rotation");
         return new ParticleMotionParametricComponent(relativePosition, direction, rotation);
     }

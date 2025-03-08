@@ -8,7 +8,10 @@ import dev.rosewood.rosegarden.utils.StringPlaceholders;
 import dev.rosewood.roseparticles.manager.ParticleManager;
 import dev.rosewood.roseparticles.particle.config.ParticleFile;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import org.bukkit.NamespacedKey;
 
 public class ParticleFileArgumentHandler extends ArgumentHandler<ParticleFile> {
 
@@ -23,17 +26,34 @@ public class ParticleFileArgumentHandler extends ArgumentHandler<ParticleFile> {
         String input = inputIterator.next();
 
         ParticleManager particleManager = commandContext.getRosePlugin().getManager(ParticleManager.class);
-        ParticleFile particleFile = particleManager.getParticleFiles().get(input.toLowerCase());
+        ParticleFile particleFile = particleManager.getParticleFile(input.toLowerCase());
         if (particleFile == null)
             throw new HandledArgumentException("argument-handler-particle-file", StringPlaceholders.of("input", input));
-
         return particleFile;
     }
 
     @Override
     public List<String> suggest(CommandContext commandContext, Argument argument, String[] strings) {
         ParticleManager particleManager = commandContext.getRosePlugin().getManager(ParticleManager.class);
-        return new ArrayList<>(particleManager.getParticleFiles().keySet());
+        return new ArrayList<>(this.denamespaceify(particleManager.getParticleFiles().keySet()));
+    }
+
+    private Set<String> denamespaceify(Set<NamespacedKey> keys) {
+        Set<String> uniques = new HashSet<>();
+        Set<String> visited = new HashSet<>();
+        for (NamespacedKey namespacedKey : keys) {
+            String string = namespacedKey.toString();
+            String key = namespacedKey.getKey();
+            uniques.add(string);
+            if (!visited.contains(key)) {
+                uniques.add(key);
+            } else {
+                uniques.remove(key);
+            }
+            visited.add(string);
+            visited.add(key);
+        }
+        return uniques;
     }
 
 }

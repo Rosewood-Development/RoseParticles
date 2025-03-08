@@ -60,14 +60,14 @@ public class EmitterLifetimeController {
         this.once = true;
     }
 
-    public EmitterLifetimeController(ParticleSystem particleSystem) {
+    public EmitterLifetimeController(ParticleSystem particleSystem, EmitterInstance emitter) {
         this.particleSystem = particleSystem;
         this.activationExpression = null;
         this.expirationExpression = null;
         this.activeTimeExpression = null;
         this.sleepTimeExpression = null;
 
-        particleSystem.getEmitter().set("lifetime", 10);
+        emitter.set("lifetime", 10);
     }
 
     public boolean emitting() {

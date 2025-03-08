@@ -38,6 +38,22 @@ public record MolangExpressionVector3(MolangExpression x,
         return parse(element);
     }
 
+    public static MolangExpressionVector3 parse(JsonObject jsonObject, String property, Vector defaultValue) throws MolangLexException, MolangParseException {
+        JsonElement element = jsonObject.get(property);
+        if (element == null) {
+            if (defaultValue == null) {
+                return null;
+            } else {
+                return new MolangExpressionVector3(
+                        new ConstantExpression((float) defaultValue.getX()),
+                        new ConstantExpression((float) defaultValue.getY()),
+                        new ConstantExpression((float) defaultValue.getZ())
+                );
+            }
+        }
+        return parse(element);
+    }
+
     public static MolangExpressionVector3 parse(JsonElement jsonElement) throws MolangLexException, MolangParseException {
         if (!jsonElement.isJsonArray())
             return empty();

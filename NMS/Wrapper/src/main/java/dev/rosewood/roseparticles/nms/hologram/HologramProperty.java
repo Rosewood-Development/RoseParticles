@@ -14,6 +14,7 @@ public final class HologramProperty<T> {
     public static final HologramProperty<String> TEXT_JSON = new HologramProperty<>();
     public static final HologramProperty<Display.Billboard> BILLBOARD = new HologramProperty<>();
     public static final HologramProperty<Vector> POSITION = new HologramProperty<>();
+    public static final HologramProperty<Vector> ROTATION = new HologramProperty<>();
     public static final HologramProperty<Transformation> TRANSFORMATION = new HologramProperty<>();
     public static final HologramProperty<Color> BACKGROUND_COLOR = new HologramProperty<>();
 

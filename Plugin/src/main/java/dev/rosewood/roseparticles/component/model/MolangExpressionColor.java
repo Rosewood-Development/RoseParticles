@@ -17,10 +17,10 @@ public record MolangExpressionColor(MolangExpression r,
 
     public MolangExpressionColor(Color color) {
         this(
-                new ConstantExpression(color.getRed()),
-                new ConstantExpression(color.getGreen()),
-                new ConstantExpression(color.getBlue()),
-                new ConstantExpression(color.getAlpha())
+                new ConstantExpression(color.getRed() / 255.0F),
+                new ConstantExpression(color.getGreen() / 255.0F),
+                new ConstantExpression(color.getBlue() / 255.0F),
+                new ConstantExpression(color.getAlpha() / 255.0F)
         );
     }
 
@@ -54,7 +54,7 @@ public record MolangExpressionColor(MolangExpression r,
         return new MolangExpressionColor(r, g, b, a);
     }
 
-    public static MolangExpressionColor empty() throws MolangLexException, MolangParseException {
+    public static MolangExpressionColor empty() {
         return new MolangExpressionColor(
                 new ConstantExpression(0),
                 new ConstantExpression(0),

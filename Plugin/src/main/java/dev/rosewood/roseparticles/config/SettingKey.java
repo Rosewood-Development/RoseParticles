@@ -13,7 +13,7 @@ public final class SettingKey {
 
     private static final List<RoseSetting<?>> KEYS = new ArrayList<>();
 
-    public static final RoseSetting<Long> UPDATE_FREQUENCY = create("update-frequency", LONG, 1L, "The number of ticks to wait between particle engine updates");
+    public static final RoseSetting<Long> UPDATE_FREQUENCY = create("update-frequency", LONG, 1L, "The number of ticks to wait between particle engine updates", "Values higher than 3 can cause particle collisions to act weird");
     public static final RoseSetting<Double> RENDER_DISTANCE = create("render-distance", DOUBLE, 64.0, "The max distance in blocks away to render particles for the player");
     public static final RoseSetting<Boolean> RUN_ASYNC = create("run-async", BOOLEAN, false, "When enabled, all particle engine calculations and packets are handled off the main thread", "May cause animations to become slightly desynced with the server tick at the cost of better performance");
     public static final RoseSetting<CommentedConfigurationSection> RESOURCE_PACK_SERVER = create("resource-pack-server", "Resource pack server settings for hosting custom particle textures", "Can be disabled if you wish to include the particle textures in your own resource pack", "The resulting pack download URL will look like this: http://%external-hostname%:%port%/pack.zip");

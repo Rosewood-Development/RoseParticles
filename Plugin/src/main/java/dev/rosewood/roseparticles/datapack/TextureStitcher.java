@@ -44,6 +44,9 @@ public class TextureStitcher {
         for (ParticleFile particleFile : particleFiles) {
             var description = particleFile.description();
             var renderParameters = description.renderParameters();
+            if (renderParameters == null)
+                continue;
+
             String identifier = description.identifier();
             String fileName = particleFile.file().getName();
 

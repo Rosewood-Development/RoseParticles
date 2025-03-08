@@ -4,6 +4,7 @@ import dev.omega.arcane.ast.MolangExpression;
 import dev.omega.arcane.reference.ExpressionBindingContext;
 import dev.rosewood.roseparticles.component.ComponentType;
 import dev.rosewood.roseparticles.particle.controller.EmitterLifetimeController;
+import dev.rosewood.roseparticles.particle.controller.LifetimeEventController;
 import dev.rosewood.roseparticles.particle.curve.Curve;
 import dev.rosewood.roseparticles.particle.emitter.BoxEmitter;
 import dev.rosewood.roseparticles.particle.emitter.DiscEmitter;
@@ -22,6 +23,7 @@ public class EmitterInstance extends ParticleEffect {
 
     private final ParticleSystem particleSystem;
     private final Map<String, Curve> curves;
+    private float[] randoms;
 
     private final MolangExpression perUpdateExpression;
     private final MolangExpression rateNumParticlesExpression;
@@ -29,6 +31,7 @@ public class EmitterInstance extends ParticleEffect {
 
     private final Emitter emitter;
     private final EmitterLifetimeController lifetimeController;
+    private final LifetimeEventController lifetimeEventController;
     
     private boolean emitOnce;
     private int instantEmitAmount;
@@ -44,6 +47,8 @@ public class EmitterInstance extends ParticleEffect {
                 .map(x -> Map.entry(x.getKey(), x.getValue().bind(context, this)))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         this.set("age", 0);
+
+        this.randoms = new float[]{ParticleUtils.RANDOM.nextFloat(), ParticleUtils.RANDOM.nextFloat(), ParticleUtils.RANDOM.nextFloat(), ParticleUtils.RANDOM.nextFloat()};
 
         var initialization = particleSystem.getComponent(ComponentType.EMITTER_INITIALIZATION);
         if (initialization != null) {
@@ -63,7 +68,7 @@ public class EmitterInstance extends ParticleEffect {
         } else if (lifetimeExpression != null) {
             this.lifetimeController = new EmitterLifetimeController(this.particleSystem, this, lifetimeExpression);
         } else {
-            this.lifetimeController = new EmitterLifetimeController(this.particleSystem);
+            this.lifetimeController = new EmitterLifetimeController(this.particleSystem, this);
         }
 
         var pointEmitter = particleSystem.getComponent(ComponentType.EMITTER_SHAPE_POINT);
@@ -115,6 +120,13 @@ public class EmitterInstance extends ParticleEffect {
 
         for (var curveEntry : this.curves.entrySet())
             this.set(curveEntry.getKey(), curveEntry.getValue().evaluate());
+
+        var lifetimeEvents = particleSystem.getComponent(ComponentType.EMITTER_LIFETIME_EVENTS);
+        if (lifetimeEvents != null) {
+            this.lifetimeEventController = new LifetimeEventController(particleSystem, lifetimeEvents);
+        } else {
+            this.lifetimeEventController = null;
+        }
     }
 
     public List<ParticleInstance> update(float deltaTime) {
@@ -123,6 +135,9 @@ public class EmitterInstance extends ParticleEffect {
 
         for (var curveEntry : this.curves.entrySet())
             this.set(curveEntry.getKey(), curveEntry.getValue().evaluate());
+
+        if (this.lifetimeEventController != null && this.get("age") == 0)
+            this.lifetimeEventController.onCreation();
 
         List<ParticleInstance> emission = new ArrayList<>();
         if (this.emitOnce && !this.emitted && this.lifetimeController.emitting()) {
@@ -158,10 +173,20 @@ public class EmitterInstance extends ParticleEffect {
             } else {
                 this.set("age", this.get("age") + deltaTime);
             }
+        } else {
+            this.set("age", this.get("age") + deltaTime);
         }
 
-        if (this.lifetimeController.update())
+        // Reset emitter state if we are looping
+        if (this.lifetimeController.update()) {
             this.lastParticleAge = 0;
+            this.particlePercentage = 0;
+            this.emitted = false;
+            this.randoms = new float[]{ParticleUtils.RANDOM.nextFloat(), ParticleUtils.RANDOM.nextFloat(), ParticleUtils.RANDOM.nextFloat(), ParticleUtils.RANDOM.nextFloat()};
+        }
+
+        if (this.lifetimeEventController != null)
+            this.lifetimeEventController.update();
 
         return emission;
     }
@@ -182,30 +207,45 @@ public class EmitterInstance extends ParticleEffect {
     }
 
     public boolean expired() {
-        if (this.lifetimeController.expired())
-            return true;
+        boolean expired = this.lifetimeController.expired();
 
-        if (this.has("lifetime") && this.get("age") >= this.get("lifetime"))
-            return true;
+        if (!expired && this.has("lifetime") && this.get("age") >= this.get("lifetime"))
+            expired = true;
 
-        if (this.emitter == null)
-            return true;
+        if (!expired && this.emitter == null)
+            expired = true;
 
-        return false;
+        if (expired && this.lifetimeEventController != null)
+            this.lifetimeEventController.onExpiration();
+
+        return expired;
     }
 
     @Override
     public float get(String identifier) {
-        return super.get(mapIdentifier(identifier));
+        return switch (identifier) {
+            case "emitter_random_1" -> this.randoms[0];
+            case "emitter_random_2" -> this.randoms[1];
+            case "emitter_random_3" -> this.randoms[2];
+            case "emitter_random_4" -> this.randoms[3];
+            default -> super.get(mapIdentifier(identifier));
+        };
     }
 
     @Override
     public boolean has(String identifier) {
-        return super.has(mapIdentifier(identifier));
+        return switch (identifier) {
+            case "emitter_random_1", "emitter_random_2", "emitter_random_3", "emitter_random_4" -> true;
+            default -> super.has(mapIdentifier(identifier));
+        };
     }
 
     @Override
     public void set(String identifier, float value) {
+        switch (identifier) {
+            case "emitter_random_1", "emitter_random_2", "emitter_random_3", "emitter_random_4" -> {}
+            default -> super.set(mapIdentifier(identifier), value);
+        };
         super.set(mapIdentifier(identifier), value);
     }
 

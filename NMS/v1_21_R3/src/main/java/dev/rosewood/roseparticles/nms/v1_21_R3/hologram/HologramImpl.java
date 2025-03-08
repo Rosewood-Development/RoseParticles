@@ -10,6 +10,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -26,6 +27,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PositionMoveRotation;
+import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import org.bukkit.Color;
 import org.bukkit.World;
@@ -38,6 +40,7 @@ import org.bukkit.util.Vector;
 
 public class HologramImpl extends Hologram {
 
+    private static final float EPSILON = 1e-3f;
     private static final LoadingCache<String, Component> textJsonComponentCache = CacheBuilder.newBuilder()
             .expireAfterAccess(Duration.of(1, ChronoUnit.MINUTES))
             .build(new CacheLoader<>() {
@@ -162,17 +165,30 @@ public class HologramImpl extends Hologram {
         if (!dataValues.isEmpty())
             packets.add(new ClientboundSetEntityDataPacket(this.entityId, dataValues));
 
-        if (includeLocation && propertiesSet.contains(HologramProperty.POSITION)) {
-            Vector previous = this.properties.getPreviousPosition();
-            Vector current = this.properties.get(HologramProperty.POSITION);
-            if (Math.abs(previous.distanceSquared(current)) > 7.5) {
-                Vec3 position = new Vec3(current.getX(), current.getY(), current.getZ());
-                packets.add(new ClientboundTeleportEntityPacket(this.entityId, new PositionMoveRotation(position, Vec3.ZERO, 0, 0), Set.of(), false));
+        if (includeLocation && (propertiesSet.contains(HologramProperty.POSITION) || propertiesSet.contains(HologramProperty.ROTATION))) {
+            Vector previousPosition = this.properties.getPreviousPosition();
+            Vector currentPosition = this.properties.get(HologramProperty.POSITION);
+            Vector previousRotation = this.properties.getPreviousRotation();
+            Vector currentRotation = this.properties.get(HologramProperty.ROTATION);
+            if (Math.abs(previousPosition.distanceSquared(currentPosition)) > 7.5) {
+                Vec3 position = new Vec3(currentPosition.getX(), currentPosition.getY(), currentPosition.getZ());
+                Vector direction = this.properties.get(HologramProperty.ROTATION);
+                if (direction == null)
+                    direction = new Vector(0, 0, 0);
+                Vec2 rotation = this.mapDirectionRotation(direction);
+                packets.add(new ClientboundTeleportEntityPacket(this.entityId, new PositionMoveRotation(position, Vec3.ZERO, rotation.y, rotation.x), Set.of(), false));
             } else {
-                short deltaX = (short) (Math.round(current.getX() * 4096) - Math.round(previous.getX() * 4096));
-                short deltaY = (short) (Math.round(current.getY() * 4096) - Math.round(previous.getY() * 4096));
-                short deltaZ = (short) (Math.round(current.getZ() * 4096) - Math.round(previous.getZ() * 4096));
-                packets.add(new ClientboundMoveEntityPacket.Pos(this.entityId, deltaX, deltaY, deltaZ, false));
+                short deltaX = (short) (Math.round(currentPosition.getX() * 4096) - Math.round(previousPosition.getX() * 4096));
+                short deltaY = (short) (Math.round(currentPosition.getY() * 4096) - Math.round(previousPosition.getY() * 4096));
+                short deltaZ = (short) (Math.round(currentPosition.getZ() * 4096) - Math.round(previousPosition.getZ() * 4096));
+                if (Objects.equals(previousRotation, currentRotation)) {
+                    packets.add(new ClientboundMoveEntityPacket.Pos(this.entityId, deltaX, deltaY, deltaZ, false));
+                } else {
+                    Vec2 rotation = this.mapDirectionRotation(currentRotation);
+                    byte rotationX = (byte) Math.round(rotation.x / 256);
+                    byte rotationY = (byte) Math.round(rotation.y / 256);
+                    packets.add(new ClientboundMoveEntityPacket.PosRot(this.entityId, deltaX, deltaY, deltaZ, rotationY, rotationX, false));
+                }
             }
         }
 
@@ -184,6 +200,18 @@ public class HologramImpl extends Hologram {
         ClientboundRemoveEntitiesPacket packet = new ClientboundRemoveEntitiesPacket(this.entityId);
 
         ((CraftPlayer) player).getHandle().connection.send(packet);
+    }
+
+    private Vec2 mapDirectionRotation(Vector rotation) {
+        double length = rotation.length();
+        if (length <= EPSILON)
+            return new Vec2(0, 0);
+        Vector normalized = rotation.clone().normalize();
+        float yaw = 0.0f;
+        if (Math.abs(normalized.getX()) > EPSILON || Math.abs(normalized.getZ()) > EPSILON)
+            yaw = (float) Math.atan2(normalized.getX(), normalized.getZ());
+        float pitch = (float) Math.asin(normalized.getY());
+        return new Vec2(pitch, yaw);
     }
 
 }
