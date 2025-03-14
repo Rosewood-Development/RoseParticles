@@ -13,8 +13,8 @@ import dev.rosewood.roseparticles.particle.config.ParticleFile;
 import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.command.BlockCommandSender;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
 
 public class SpawnCommand extends BaseRoseCommand {
 
@@ -29,8 +29,11 @@ public class SpawnCommand extends BaseRoseCommand {
             List<Entity> entities = Bukkit.selectEntities(context.getSender(), entitySelector);
             for (Entity entity : entities)
                 particleManager.spawnParticleSystem(entity, particleFile);
-        } else if (context.getSender() instanceof Player player) {
-            Location location = player.getLocation();
+        } else if (context.getSender() instanceof Entity entity) {
+            Location location = entity.getLocation();
+            particleManager.spawnParticleSystem(location, particleFile);
+        } else if (context.getSender() instanceof BlockCommandSender block) {
+            Location location = block.getBlock().getLocation().add(0.5, 1.5, 0.5);
             particleManager.spawnParticleSystem(location, particleFile);
         } else {
             Location location = new Location(Bukkit.getWorlds().getFirst(), 0, 0, 0);
@@ -41,7 +44,7 @@ public class SpawnCommand extends BaseRoseCommand {
     @Override
     protected CommandInfo createCommandInfo() {
         return CommandInfo.builder("spawn")
-                .descriptionKey("spawn-command-description")
+                .descriptionKey("command-spawn-description")
                 .permission("roseparticles.spawn")
                 .arguments(ArgumentsDefinition.builder()
                         .required("particle", ParticleFileArgumentHandler.INSTANCE)

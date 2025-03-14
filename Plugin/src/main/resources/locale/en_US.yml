@@ -30,5 +30,16 @@ command-reload-reloaded: '&eConfiguration and locale files were reloaded.'
 command-spawn-description: 'Spawn a particle system'
 command-spawn-success: '&aCreated particle system for &b%name%&a!'
 
+# Firework Command
+command-firework-description: 'Give or spawn particle systems in fireworks'
+command-firework-give-description: 'Give a firework that spawns a particle system'
+command-firework-spawn-description: 'Spawn a firework that spawns a particle system'
+command-firework-give-target: '&cNo target was specified to give the item to'
+command-firework-give-success: '&eGave a firework to &b%player%&e.'
+
 # Argument Handlers
-argument-handler-particle-file: 'Particle file [%input%] does not exist'
+argument-handler-particle-file: 'Particle file does not exist: %input%'
+argument-handler-relative-location: 'Invalid location: [%x%, %y%, %z%]'
+argument-handler-relative-location-missing-world: 'You must specify a world with this command'
+argument-handler-relative-location-console: 'Cannot use relative coordinates as console'
+argument-handler-world: 'Invalid world: %input%'

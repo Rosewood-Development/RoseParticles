@@ -20,6 +20,7 @@ public class BaseCommand extends PrimaryCommand {
                 .aliases("rp", "roseparticles")
                 .arguments(ArgumentsDefinition.builder()
                         .optionalSub(
+                                new FireworkCommand(this.rosePlugin),
                                 new HelpCommand(this.rosePlugin, this),
                                 new ReloadCommand(this.rosePlugin),
                                 new SpawnCommand(this.rosePlugin)

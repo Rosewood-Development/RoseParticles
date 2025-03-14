@@ -9,7 +9,11 @@ import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
 import org.bukkit.util.VoxelShape;
 
-public class RayTracer {
+public final class RayTracer {
+
+    private RayTracer() {
+
+    }
 
     public record RayTraceOutput(Location hitPosition,
                                  Block hitBlock,

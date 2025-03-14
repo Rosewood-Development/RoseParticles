@@ -85,3 +85,4 @@ shadowJar {
 }
 
 build.dependsOn shadowJar
+generateMetadataFileForShadowPublication.dependsOn jar

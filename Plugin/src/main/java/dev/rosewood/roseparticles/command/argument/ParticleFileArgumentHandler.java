@@ -22,10 +22,10 @@ public class ParticleFileArgumentHandler extends ArgumentHandler<ParticleFile> {
     }
 
     @Override
-    public ParticleFile handle(CommandContext commandContext, Argument argument, InputIterator inputIterator) throws HandledArgumentException {
+    public ParticleFile handle(CommandContext context, Argument argument, InputIterator inputIterator) throws HandledArgumentException {
         String input = inputIterator.next();
 
-        ParticleManager particleManager = commandContext.getRosePlugin().getManager(ParticleManager.class);
+        ParticleManager particleManager = context.getRosePlugin().getManager(ParticleManager.class);
         ParticleFile particleFile = particleManager.getParticleFile(input.toLowerCase());
         if (particleFile == null)
             throw new HandledArgumentException("argument-handler-particle-file", StringPlaceholders.of("input", input));
@@ -33,8 +33,8 @@ public class ParticleFileArgumentHandler extends ArgumentHandler<ParticleFile> {
     }
 
     @Override
-    public List<String> suggest(CommandContext commandContext, Argument argument, String[] strings) {
-        ParticleManager particleManager = commandContext.getRosePlugin().getManager(ParticleManager.class);
+    public List<String> suggest(CommandContext context, Argument argument, String[] strings) {
+        ParticleManager particleManager = context.getRosePlugin().getManager(ParticleManager.class);
         return new ArrayList<>(this.denamespaceify(particleManager.getParticleFiles().keySet()));
     }
 
