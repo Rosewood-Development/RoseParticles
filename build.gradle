@@ -29,23 +29,6 @@ allprojects {
     dependencies {
         compileOnly 'org.jetbrains:annotations:24.0.1'
     }
-
-    publishing {
-        repositories {
-            if (project.hasProperty('mavenUser') && project.hasProperty('mavenPassword')) {
-                maven {
-                    credentials {
-                        username = project.mavenUser
-                        password = project.mavenPassword
-                    }
-
-                    def releasesRepoUrl = 'https://repo.rosewooddev.io/repository/public-releases/'
-                    def snapshotsRepoUrl = 'https://repo.rosewooddev.io/repository/public-snapshots/'
-                    url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-                }
-            }
-        }
-    }
 }
 
 group = 'dev.rosewood'
@@ -70,6 +53,20 @@ publishing {
             artifactId = 'roseparticles'
             pom {
                 name = 'roseparticles'
+            }
+        }
+    }
+    repositories {
+        if (project.hasProperty('mavenUser') && project.hasProperty('mavenPassword')) {
+            maven {
+                credentials {
+                    username = project.mavenUser
+                    password = project.mavenPassword
+                }
+
+                def releasesRepoUrl = 'https://repo.rosewooddev.io/repository/public-releases/'
+                def snapshotsRepoUrl = 'https://repo.rosewooddev.io/repository/public-snapshots/'
+                url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
             }
         }
     }
