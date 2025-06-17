@@ -5,7 +5,6 @@ import dev.rosewood.roseparticles.RoseParticles;
 import dev.rosewood.roseparticles.component.ComponentType;
 import dev.rosewood.roseparticles.component.curve.CurveDefinition;
 import dev.rosewood.roseparticles.component.event.EventDefinition;
-import dev.rosewood.roseparticles.config.SettingKey;
 import dev.rosewood.roseparticles.datapack.StitchedTexture;
 import dev.rosewood.roseparticles.manager.HologramManager;
 import dev.rosewood.roseparticles.nms.hologram.Hologram;
@@ -39,7 +38,6 @@ public class ParticleSystem {
     private final List<ParticleInstance> newParticles;
     private final Map<String, Curve> curves;
     private final Map<String, EventDefinition> events;
-    private final float deltaTime;
     private boolean doneEmitting;
 
     public ParticleSystem(HologramManager hologramManager, Entity entity, ParticleFile particleFile, StitchedTexture texture) {
@@ -61,7 +59,6 @@ public class ParticleSystem {
         this.newParticles = new ArrayList<>();
         this.curves = new HashMap<>();
         this.events = particleFile.events();
-        this.deltaTime = SettingKey.UPDATE_FREQUENCY.get() / 20F;
 
         List<CurveDefinition> curveDefinitions = this.particleFile.curves();
         for (CurveDefinition curveDefinition : curveDefinitions) {
@@ -123,9 +120,9 @@ public class ParticleSystem {
         this.hologramManager.deleteHologram(hologram);
     }
 
-    public void update() {
+    public void update(float deltaTime) {
         if (!this.doneEmitting) {
-            this.newParticles.addAll(this.emitter.update(this.deltaTime));
+            this.newParticles.addAll(this.emitter.update(deltaTime));
             if (this.emitter.expired())
                 this.doneEmitting = true;
         }
@@ -134,7 +131,7 @@ public class ParticleSystem {
         this.newParticles.clear();
 
         this.particles.removeIf(particle -> {
-            particle.update(this.deltaTime);
+            particle.update(deltaTime);
             if (particle.expired()) {
                 particle.remove();
                 return true;

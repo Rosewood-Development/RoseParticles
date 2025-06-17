@@ -38,6 +38,7 @@ dependencies {
     implementation project(':Arcane')
     implementation project(':NMS:Wrapper')
     implementation project(path: ':NMS:v1_21_R3', configuration: 'reobf')
+    implementation project(path: ':NMS:v1_21_R4', configuration: 'reobf')
 }
 
 jar {

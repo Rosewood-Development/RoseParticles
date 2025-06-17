@@ -31,6 +31,8 @@ public class ParticleManager extends Manager implements Listener {
     private final Map<NamespacedKey, ParticleFile> particleFiles;
     private TextureStitcher textureStitcher;
     private ScheduledTask particleTask;
+    private long lastUpdateTime;
+    private transient boolean running = false;
 
     public ParticleManager(RosePlugin rosePlugin) {
         super(rosePlugin);
@@ -40,6 +42,7 @@ public class ParticleManager extends Manager implements Listener {
         this.resourceServer = new ResourceServer(this.rosePlugin);
         this.particleFiles = new HashMap<>();
         Bukkit.getPluginManager().registerEvents(this, rosePlugin);
+        this.lastUpdateTime = System.currentTimeMillis();
     }
 
     @Override
@@ -136,23 +139,35 @@ public class ParticleManager extends Manager implements Listener {
     }
 
     public void update() {
-        this.particleSystems.addAll(this.newParticleSystems);
-        this.newParticleSystems.clear();
-        this.particleSystems.removeIf(particleSystem -> {
-            try {
-                particleSystem.update();
-                if (particleSystem.isFinished()) {
+        if (this.running)
+            return;
+
+        this.running = true;
+        try {
+            long currentTime = System.currentTimeMillis();
+            float deltaTime = (currentTime - this.lastUpdateTime) / 1000.0F;
+            this.lastUpdateTime = currentTime;
+
+            this.particleSystems.addAll(this.newParticleSystems);
+            this.newParticleSystems.clear();
+            this.particleSystems.removeIf(particleSystem -> {
+                try {
+                    particleSystem.update(deltaTime);
+                    if (particleSystem.isFinished()) {
+                        particleSystem.remove();
+                        return true;
+                    }
+                    return false;
+                } catch (Exception e) {
+                    this.rosePlugin.getLogger().warning("Particle system " + particleSystem.getIdentifier() + " threw an exception and has been forcefully removed");
+                    e.printStackTrace();
                     particleSystem.remove();
                     return true;
                 }
-                return false;
-            } catch (Exception e) {
-                this.rosePlugin.getLogger().warning("Particle system " + particleSystem.getIdentifier() + " threw an exception and has been forcefully removed");
-                e.printStackTrace();
-                particleSystem.remove();
-                return true;
-            }
-        });
+            });
+        } finally {
+            this.running = false;
+        }
     }
 
     @EventHandler
