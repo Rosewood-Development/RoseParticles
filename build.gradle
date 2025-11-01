@@ -1,5 +1,5 @@
 plugins {
-    id 'com.gradleup.shadow' version '8.3.5'
+    id 'com.gradleup.shadow' version '9.2.2'
     id 'maven-publish'
     id 'java-library'
 }
@@ -32,6 +32,9 @@ allprojects {
 }
 
 group = 'dev.rosewood'
+version = providers.exec {
+    commandLine 'git', 'rev-parse', '--short', 'HEAD'
+}.standardOutput.asText.map { it.trim() }.orElse("unknown").get()
 
 dependencies {
     implementation project(':Plugin')
@@ -40,6 +43,7 @@ dependencies {
     implementation project(path: ':NMS:v1_21_R3', configuration: 'reobf')
     implementation project(path: ':NMS:v1_21_R4', configuration: 'reobf')
     implementation project(path: ':NMS:v1_21_R5', configuration: 'reobf')
+    implementation project(path: ':NMS:v1_21_R6', configuration: 'reobf')
 }
 
 jar {
@@ -51,7 +55,7 @@ jar {
 publishing {
     publications {
         shadow(MavenPublication) { publication ->
-            project.shadow.component(publication)
+            from components.shadow
             artifactId = 'roseparticles'
             pom {
                 name = 'roseparticles'
