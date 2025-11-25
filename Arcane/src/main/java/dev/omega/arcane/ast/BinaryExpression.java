@@ -15,6 +15,8 @@ public record BinaryExpression(MolangExpression left, MolangExpression right, Mo
             case GREATER_THAN -> leftValue > rightValue ? 1.0f : 0.0f;
             case LESS_THAN_OR_EQUAL -> leftValue <= rightValue ? 1.0f : 0.0f;
             case GREATER_THAN_OR_EQUAL -> leftValue >= rightValue ? 1.0f : 0.0f;
+            case DOUBLE_EQUAL -> leftValue == rightValue ? 1.0f : 0.0f;
+            case BANG_EQUAL -> leftValue != rightValue ? 1.0f : 0.0f;
 
             // "For boolean tests, a float value equivalent to 0.0 is false, and anything not equal to 0.0 is true." - Molang language documentation
             case DOUBLE_AMPERSAND -> {

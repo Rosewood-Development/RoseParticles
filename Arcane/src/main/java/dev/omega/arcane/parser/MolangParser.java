@@ -193,7 +193,7 @@ public class MolangParser {
     private MolangExpression comparison() throws MolangParseException {
         MolangExpression left = term();
 
-        while (match(LESS_THAN, GREATER_THAN, LESS_THAN_OR_EQUAL, GREATER_THAN_OR_EQUAL)) {
+        while (match(LESS_THAN, GREATER_THAN, LESS_THAN_OR_EQUAL, GREATER_THAN_OR_EQUAL, DOUBLE_EQUAL, BANG_EQUAL)) {
             MolangTokenInstance operator = previous();
             left = new BinaryExpression(left, term(), operator.type());
         }
